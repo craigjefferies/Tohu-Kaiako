@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+node_modules/
+frontend/static/styles.css.map
+.pytest_cache/
+coverage/
+dist/
+build/
+.DS_Store
+uvicorn.log

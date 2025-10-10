@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" x-data="app()" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title x-text="text.title">Tohu Kaiako — "Teacher's Sign"</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script defer src="/static/i18n.js"></script>
+    <script defer src="/static/app.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  </head>
+  <body x-cloak class="min-h-full bg-gray-50 text-gray-900">ml>
+<html lang="en" x-data="app()" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title x-text="text.title">Tohu Kaiako — “Teacher’s Sign”</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script defer src="/static/i18n.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body class="min-h-full bg-gray-50 text-gray-900">
+    <main class="max-w-3xl mx-auto p-6">
+      <h1 class="text-2xl font-semibold mb-4" x-text="text.heading">Tohu Kaiako — “Teacher’s Sign”</h1>
+      <form
+        @submit.prevent="generate"
+        class="grid gap-4 bg-white p-4 rounded-xl shadow"
+        :aria-busy="loading"
+      >
+        <label class="grid gap-1">
+          <span class="text-sm font-medium" x-text="text.themeLabel">Theme / Kaupapa</span>
+          <input
+            x-model="form.theme"
+            required
+            class="border rounded p-2"
+            :placeholder="text.themePlaceholder"
+            name="theme"
+            type="text"
+          />
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm font-medium" x-text="text.levelLabel">Learning Level</span>
+          <select x-model="form.level" class="border rounded p-2" name="level">
+            <option value="ECE">ECE</option>
+            <option value="Junior Primary">Junior Primary</option>
+          </select>
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm font-medium" x-text="text.keywordsLabel">Keywords / Kupu matua (optional)</span>
+          <input
+            x-model="form.keywords"
+            class="border rounded p-2"
+            :placeholder="text.keywordsPlaceholder"
+            name="keywords"
+            type="text"
+          />
+        </label>
+        <button
+          type="submit"
+          class="bg-black text-white px-4 py-2 rounded hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-60"
+          :disabled="loading"
+        >
+          <span x-text="text.submitLabel">Hangaia te Kete / Generate Pack</span>
+        </button>
+      </form>
+
+      <p
+        x-show="loading"
+        class="mt-6 text-sm text-gray-600"
+        x-text="text.generating"
+        x-cloak
+        role="status"
+        aria-live="polite"
+      >
+        Generating…
+      </p>
+
+      <p
+        x-show="error"
+        class="mt-4 text-sm text-red-600"
+        x-text="error"
+        role="alert"
+        aria-live="assertive"
+        x-cloak
+      ></p>
+
+      <section x-show="result" class="mt-6 bg-white p-4 rounded-xl shadow print:p-0" x-cloak>
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-xl font-semibold" x-text="text.generatedHeading">Generated Pack</h2>
+          <div class="flex gap-2">
+            <button @click="window.print()" class="border px-3 py-1 rounded" type="button">
+              <span x-text="text.print">Tā / Print</span>
+            </button>
+            <button @click="downloadPDF()" class="border px-3 py-1 rounded" type="button">
+              <span x-text="text.download">Tikiake / Download PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid gap-4">
+          <img
+            :src="result.image_url"
+            alt="Provocation image"
+            class="rounded-lg max-h-80 object-contain bg-gray-100"
+          />
+
+          <div>
+            <h3 class="font-medium" x-text="text.nzslHeading">NZSL Story Prompt</h3>
+            <ul class="list-disc ml-6">
+              <li>
+                <strong x-text="text.keySigns"></strong>:
+                <span x-text="result.nzsl_story_prompt.key_signs.join(', ')"></span>
+              </li>
+              <li>
+                <strong x-text="text.classifiers"></strong>:
+                <span x-text="result.nzsl_story_prompt.classifiers.join(', ')"></span>
+              </li>
+              <li>
+                <strong x-text="text.facialExpressions"></strong>:
+                <span x-text="result.nzsl_story_prompt.facial_expressions.join(', ')"></span>
+              </li>
+            </ul>
+            <h4 class="font-medium mt-2" x-text="text.storyOutline">Story outline</h4>
+            <ol class="list-decimal ml-6 mt-2">
+              <template x-for="step in result.nzsl_story_prompt.story_outline" :key="step">
+                <li x-text="step"></li>
+              </template>
+            </ol>
+          </div>
+
+          <div>
+            <h3 class="font-medium" x-text="text.activityHeading">Activity Web</h3>
+            <ul class="list-disc ml-6">
+              <template x-for="activity in result.activity_web" :key="activity.category">
+                <li>
+                  <strong x-text="activity.category"></strong>:
+                  <span x-text="activity.description"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
