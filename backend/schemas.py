@@ -11,6 +11,16 @@ class GenerateRequest(BaseModel):
     keywords: Optional[str] = ""
 
 
+class SemanticComponent(BaseModel):
+    """Represents a single semantic element in the scene."""
+    model_config = ConfigDict(extra='ignore')
+    
+    type: str  # agent, action, object, setting, attribute
+    label: str  # e.g., "Boy", "Eat", "Apple", "Kitchen"
+    nzsl_sign: str  # e.g., "BOY", "EAT", "APPLE", "KITCHEN"
+    semantic_role: str  # e.g., "Who is doing the action", "What is happening"
+
+
 class NZSLStoryPrompt(BaseModel):
     model_config = ConfigDict(extra='ignore')
     
@@ -27,9 +37,22 @@ class Activity(BaseModel):
     description: str
 
 
+class SceneImages(BaseModel):
+    """Collection of generated imagery to scaffold scene-based storytelling."""
+    model_config = ConfigDict(extra='ignore')
+    
+    object: str
+    action: str
+    setting: str
+    scene: str
+
+
 class GenerateResponse(BaseModel):
     model_config = ConfigDict(extra='ignore')
     
     image_url: str
     nzsl_story_prompt: NZSLStoryPrompt
     activity_web: List[Activity]
+    semantic_components: List[SemanticComponent] = []
+    learning_prompts: List[str] = []
+    scene_images: SceneImages

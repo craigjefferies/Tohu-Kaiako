@@ -28,8 +28,18 @@ def test_generate_success(monkeypatch) -> None:
                     {"category": "Maths", "description": "Count"},
                     {"category": "Deaf Culture", "description": "Discuss"},
                 ],
+                "semantic_components": [
+                    {"type": "object", "label": "Nest", "nzsl_sign": "NEST", "semantic_role": "Where the bird rests"},
+                    {"type": "action", "label": "Fly", "nzsl_sign": "FLY", "semantic_role": "What the bird does"},
+                    {"type": "setting", "label": "Forest", "nzsl_sign": "FOREST", "semantic_role": "Where it happens"},
+                ],
             },
-            "https://example.com/image.png",
+            {
+                "object": "https://example.com/object.png",
+                "action": "https://example.com/action.png",
+                "setting": "https://example.com/setting.png",
+                "scene": "https://example.com/scene.png",
+            },
         )
 
     monkeypatch.setattr("backend.app.generate_pack", fake_generate_pack)
@@ -39,6 +49,7 @@ def test_generate_success(monkeypatch) -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert data["image_url"] == "https://example.com/image.png"
+    assert data["image_url"] == "https://example.com/scene.png"
+    assert data["scene_images"]["object"] == "https://example.com/object.png"
     assert len(data["activity_web"]) == 4
     assert data["nzsl_story_prompt"]["key_signs"] == ["BIRD"]

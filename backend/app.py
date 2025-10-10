@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .llm import generate_pack
-from .schemas import Activity, GenerateRequest, GenerateResponse, NZSLStoryPrompt
+from .schemas import Activity, GenerateRequest, GenerateResponse, NZSLStoryPrompt, SemanticComponent
 
 logger = logging.getLogger("tohu-kaiako")
 logging.basicConfig(level=logging.INFO)
@@ -36,11 +36,14 @@ async def index(request: Request) -> HTMLResponse:
 @app.post("/api/generate_pack", response_model=GenerateResponse)
 async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
     try:
-        text_json, image_url = await generate_pack(req.theme, req.level, req.keywords or "")
+        text_json, scene_images = await generate_pack(req.theme, req.level, req.keywords or "")
         response_payload: Dict[str, Any] = {
-            "image_url": image_url,
+            "image_url": scene_images["scene"],
             "nzsl_story_prompt": NZSLStoryPrompt(**text_json["nzsl_story_prompt"]),
             "activity_web": [Activity(**activity) for activity in text_json["activity_web"]],
+            "semantic_components": [SemanticComponent(**comp) for comp in text_json.get("semantic_components", [])],
+            "learning_prompts": text_json.get("learning_prompts", []),
+            "scene_images": scene_images,
         }
         return GenerateResponse(**response_payload)
     except HTTPException:
@@ -50,7 +53,7 @@ async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
         # Provide more specific error messages
         error_msg = str(exc)
         if "401" in error_msg or "Unauthorized" in error_msg:
-            detail = "API authentication failed. Please check your OpenRouter API key and account balance."
+            detail = "API authentication failed. Please check your Google Generative AI API key and project billing."
         elif "429" in error_msg or "rate limit" in error_msg.lower():
             detail = "Rate limit exceeded. Please wait a moment and try again."
         elif "timeout" in error_msg.lower():
