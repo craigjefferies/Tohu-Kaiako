@@ -46,5 +46,17 @@ async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
     except HTTPException:
         raise
     except Exception as exc:  # pragma: no cover - defensive logging
-        logger.error("Pack generation failed", extra={"error": str(exc)})
-        raise HTTPException(status_code=500, detail="Generation failed. Please try again.") from exc
+        logger.error("Pack generation failed", extra={"error": str(exc)}, exc_info=True)
+        # Provide more specific error messages
+        error_msg = str(exc)
+        if "401" in error_msg or "Unauthorized" in error_msg:
+            detail = "API authentication failed. Please check your OpenRouter API key and account balance."
+        elif "429" in error_msg or "rate limit" in error_msg.lower():
+            detail = "Rate limit exceeded. Please wait a moment and try again."
+        elif "timeout" in error_msg.lower():
+            detail = "Request timed out. Please try again."
+        elif "Invalid" in error_msg and "response" in error_msg:
+            detail = "Invalid response from AI service. Please try again."
+        else:
+            detail = f"Generation failed: {error_msg}"
+        raise HTTPException(status_code=500, detail=detail) from exc

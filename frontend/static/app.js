@@ -23,7 +23,14 @@ function app() {
         this.result = await response.json();
       } catch (err) {
         console.error("Generation failed", err);
-        this.error = text.errorMessage;
+        try {
+          // Try to parse the error response for more specific message
+          const errorData = JSON.parse(err.message);
+          this.error = errorData.detail || text.errorMessage;
+        } catch {
+          // Fallback to generic message if parsing fails
+          this.error = text.errorMessage;
+        }
       } finally {
         this.loading = false;
       }

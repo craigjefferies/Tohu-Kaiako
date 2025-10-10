@@ -1,5 +1,14 @@
 import os
 from functools import lru_cache
+from pathlib import Path
+
+# Load .env file
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    pass  # python-dotenv not available
 
 
 class Settings:
