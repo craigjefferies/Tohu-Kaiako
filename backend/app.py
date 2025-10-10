@@ -9,7 +9,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .llm import generate_pack
-from .schemas import Activity, GenerateRequest, GenerateResponse, NZSLStoryPrompt, SemanticComponent
+from .schemas import (
+    Activity,
+    GenerateRequest,
+    GenerateResponse,
+    NZSLStoryPrompt,
+    SemanticComponent,
+    StoryScaffold,
+)
 
 logger = logging.getLogger("tohu-kaiako")
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +44,12 @@ async def index(request: Request) -> HTMLResponse:
 async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
     try:
         text_json, scene_images = await generate_pack(req.theme, req.level, req.keywords or "")
+        
+        # Parse story_scaffold if present
+        story_scaffold = None
+        if "story_scaffold" in text_json:
+            story_scaffold = StoryScaffold(**text_json["story_scaffold"])
+        
         response_payload: Dict[str, Any] = {
             "image_url": scene_images["scene"],
             "nzsl_story_prompt": NZSLStoryPrompt(**text_json["nzsl_story_prompt"]),
@@ -44,6 +57,7 @@ async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
             "semantic_components": [SemanticComponent(**comp) for comp in text_json.get("semantic_components", [])],
             "learning_prompts": text_json.get("learning_prompts", []),
             "scene_images": scene_images,
+            "story_scaffold": story_scaffold,
         }
         return GenerateResponse(**response_payload)
     except HTTPException:

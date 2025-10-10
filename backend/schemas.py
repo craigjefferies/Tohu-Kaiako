@@ -21,6 +21,34 @@ class SemanticComponent(BaseModel):
     semantic_role: str  # e.g., "Who is doing the action", "What is happening"
 
 
+class StoryRole(BaseModel):
+    """Semantic role in the story (agent, action, location, patient, state)."""
+    model_config = ConfigDict(extra='ignore')
+    
+    role: str  # AGENT, ACTION, LOCATION, PATIENT, STATE
+    gloss: str  # English label (e.g., "Fantail", "Fly", "Garden")
+    nzsl: str  # NZSL gloss (e.g., "FANTAIL", "FLY", "GARDEN")
+
+
+class StoryFrame(BaseModel):
+    """A single frame/step in the story sequence."""
+    model_config = ConfigDict(extra='ignore')
+    
+    id: int  # Frame number (1, 2, 3...)
+    nvpair: List[str]  # Role IDs used in this frame (e.g., ["AGENT", "LOCATION"])
+    caption_en: str  # English caption (e.g., "The fantail is in the garden.")
+    gloss: str  # NZSL gloss sequence (e.g., "FANTAIL GARDEN")
+
+
+class StoryScaffold(BaseModel):
+    """Complete story structure with roles and frames for sequencing."""
+    model_config = ConfigDict(extra='ignore')
+    
+    theme: str  # Story theme
+    roles: List[StoryRole]  # All semantic roles
+    frames: List[StoryFrame]  # Sequential story frames
+
+
 class NZSLStoryPrompt(BaseModel):
     model_config = ConfigDict(extra='ignore')
     
@@ -56,3 +84,4 @@ class GenerateResponse(BaseModel):
     semantic_components: List[SemanticComponent] = []
     learning_prompts: List[str] = []
     scene_images: SceneImages
+    story_scaffold: Optional[StoryScaffold] = None  # New frames-based story structure

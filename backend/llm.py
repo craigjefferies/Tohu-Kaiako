@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 
 import google.generativeai as genai
 
-from .prompts import component_image_prompt, image_prompt, text_system_prompt
+from .prompts import component_image_prompt, scene_image_prompt, text_system_prompt
 from .settings import settings
 
 logger = logging.getLogger("tohu-kaiako")
@@ -148,6 +148,9 @@ def _fallback_component(comp_type: str, theme: str, key_signs: List[str]) -> Dic
 async def generate_pack(theme: str, level: str, keywords: str) -> Tuple[Dict[str, Any], Dict[str, str]]:
     text_json = await call_text(theme, level, keywords)
     
+    # Generate scene seed from theme for visual coherence
+    scene_seed = abs(hash(theme)) % 100000
+    
     # Ensure learning prompts cover the desired pedagogy
     learning_prompts = text_json.setdefault("learning_prompts", [])
     scaffold_prompts = [
@@ -171,10 +174,11 @@ async def generate_pack(theme: str, level: str, keywords: str) -> Tuple[Dict[str
     
     component_list = [object_component, action_component, setting_component]
     
-    object_prompt = component_image_prompt(theme, "object", object_component["label"], object_component.get("nzsl_sign", object_component["label"].upper()))
-    action_prompt = component_image_prompt(theme, "action", action_component["label"], action_component.get("nzsl_sign", action_component["label"].upper()))
-    setting_prompt = component_image_prompt(theme, "setting", setting_component["label"], setting_component.get("nzsl_sign", setting_component["label"].upper()))
-    scene_prompt = image_prompt(theme, keywords or "", component_list)
+    # Use unified prompts with scene_seed for coherence
+    object_prompt = component_image_prompt(theme, "object", object_component["label"], object_component.get("nzsl_sign", object_component["label"].upper()), scene_seed)
+    action_prompt = component_image_prompt(theme, "action", action_component["label"], action_component.get("nzsl_sign", action_component["label"].upper()), scene_seed)
+    setting_prompt = component_image_prompt(theme, "setting", setting_component["label"], setting_component.get("nzsl_sign", setting_component["label"].upper()), scene_seed)
+    scene_prompt = scene_image_prompt(theme, keywords or "", component_list, scene_seed)
     
     object_task = asyncio.create_task(_generate_image(object_prompt, f"{theme} object"))
     action_task = asyncio.create_task(_generate_image(action_prompt, f"{theme} action"))

@@ -1,24 +1,126 @@
 from typing import Dict, List, Optional
 
 
-def component_image_prompt(theme: str, component_type: str, label: str, nzsl_sign: str) -> str:
+def unified_image_prompt(
+    theme: str,
+    asset_type: str,
+    asset_spec: str,
+    scene_seed: int,
+) -> str:
     """
-    Prompt for generating an isolated illustration that highlights a single semantic component.
+    Unified image prompt template with SCENE_SEED for style coherence across all assets.
+    
+    Args:
+        theme: The overall theme/topic (e.g., "Fantail in the Garden")
+        asset_type: One of "OBJECT", "ACTION", "SETTING", "SCENE"
+        asset_spec: Specific description for this asset type
+        scene_seed: Integer seed for style consistency (derived from theme hash)
+    
+    Returns:
+        Formatted prompt string for image generation
     """
-    return (
-        "Create an isolated illustration to support scene-based NZSL storytelling for 3-5 year olds.\n\n"
-        f"THEME: {theme}\n"
-        f"FOCUS TYPE: {component_type.upper()}\n"
-        f"FOCUS LABEL: {label}\n"
-        f"NZSL SIGN (for reference only, no text in image): {nzsl_sign}\n\n"
-        "REQUIREMENTS:\n"
-        "- Show only the focus element with a clean, neutral background\n"
-        "- Use clear shapes and colour contrast so tamariki can identify the element quickly\n"
-        "- Convey the meaning of the NZSL sign visually (e.g., motion cues, character posture)\n"
-        "- Keep composition simple; the element should sit centrally and be easy to cut out\n"
-        "- Avoid written text or fingerspelling in the illustration\n\n"
-        "STYLE: Warm, inclusive, Aotearoa NZ inspired storybook aesthetic."
+    # Background instructions based on asset type
+    background = "transparent or clean neutral background" if asset_type != "SCENE" else "soft, warm background with subtle depth"
+    composition = "centered, isolated element with padding for tap targets" if asset_type != "SCENE" else "natural scene composition with clear relationships between elements"
+    
+    return f"""SYSTEM INTENT:
+You create cohesive, child-safe illustrations for a bilingual NZSL–English early-childhood app (ages 3–5).
+Prioritise clear shapes, neutral backgrounds for isolated tiles, gentle expressions, no text, no watermarks.
+
+GLOBAL STYLE:
+- Style: flat, friendly classroom-illustration
+- Palette: soft, warm, welcoming colors
+- Hands/limbs: readable silhouettes
+- Camera: eye-level, simple composition
+- Aesthetic: storybook quality (Eric Carle / Beatrix Potter inspired)
+
+TASK:
+Create a {asset_type} asset for theme "{theme}".
+
+{asset_type} SPECIFICATION:
+{asset_spec}
+
+COHESION:
+- Match style and palette to SEED_ID={scene_seed}
+- Maintain consistent illustration style across all assets
+- No brand marks. No written text. No on-image labels.
+- Cultural accuracy for Aotearoa NZ native flora/fauna
+
+OUTPUT REQUIREMENTS:
+- Image size: 1024x1024 PNG
+- Background: {background}
+- Composition: {composition}
+- Safe, joyful, inclusive representation
+- High contrast for visibility and accessibility
+
+CRITICAL:
+- NO text, letters, numbers, or labels in the image
+- NO watermarks or signatures
+- Child-safe content only
+- Suitable for early childhood education contexts"""
+
+
+def component_image_prompt(theme: str, component_type: str, label: str, nzsl_sign: str, scene_seed: int = 0) -> str:
+    """
+    Generate prompt for isolated semantic component using unified template.
+    
+    Args:
+        theme: Overall theme
+        component_type: "object", "action", "setting", "attribute"
+        label: Component label (e.g., "Fantail", "Fly", "Garden")
+        nzsl_sign: NZSL gloss for reference
+        scene_seed: Seed for style coherence
+    """
+    asset_type = component_type.upper()
+    
+    # Asset-specific specifications
+    specs = {
+        "OBJECT": f"Single {label}, clear view, friendly expression. Show the subject that represents '{nzsl_sign}' in NZSL.",
+        "ACTION": f"{label} in motion - show implied movement or action state. Convey the meaning of '{nzsl_sign}' visually through posture or motion cues. Still usable as a sticker/tile.",
+        "SETTING": f"{label} environment. Simple, uncluttered location showing key features. Represents '{nzsl_sign}' place/context.",
+        "ATTRIBUTE": f"Visual representation of '{label}' quality/feeling. Show this attribute through character expression or visual metaphor.",
+        "AGENT": f"Single {label} character, friendly and approachable. Clear silhouette representing '{nzsl_sign}' agent/person.",
+    }
+    
+    asset_spec = specs.get(asset_type, f"{label} - {nzsl_sign}")
+    
+    return unified_image_prompt(theme, asset_type, asset_spec, scene_seed)
+
+
+def scene_image_prompt(theme: str, keywords: str, components: List[Dict[str, str]], scene_seed: int) -> str:
+    """
+    Generate prompt for full integrated scene using unified template.
+    
+    Args:
+        theme: Overall theme
+        keywords: Additional context
+        components: List of semantic components to include
+        scene_seed: Seed for style coherence with isolated assets
+    """
+    # Build component list for asset spec
+    component_details = "\n".join(
+        f"- {comp['type'].title()}: {comp['label']} ({comp.get('nzsl_sign', comp['label'].upper())})"
+        for comp in components
     )
+    
+    context_line = f"Context: {keywords}" if keywords else "Context: Early childhood learning"
+    
+    asset_spec = f"""Full integrated scene showing: {theme}
+
+{context_line}
+
+Scene elements to include:
+{component_details}
+
+Arrange elements so their relationships are clear and children can identify:
+- WHO is in the scene
+- WHAT is happening  
+- WHERE it takes place
+- How elements interact
+
+Make the scene warm, inviting, and suitable for storytelling and retelling activities."""
+    
+    return unified_image_prompt(theme, "SCENE", asset_spec, scene_seed)
 
 
 def image_prompt(theme: str, keywords: str, components: Optional[List[Dict[str, str]]] = None) -> str:
@@ -93,6 +195,21 @@ Return ONLY valid JSON with this EXACT structure:
     "facial_expressions": ["Happy", "Curious", "Excited"],
     "story_outline": ["Step 1", "Step 2", "Step 3"]
   }},
+  "story_scaffold": {{
+    "theme": "{theme}",
+    "roles": [
+      {{"role": "AGENT", "gloss": "Character/Person", "nzsl": "SIGN"}},
+      {{"role": "ACTION", "gloss": "Action word", "nzsl": "SIGN"}},
+      {{"role": "LOCATION", "gloss": "Place", "nzsl": "SIGN"}},
+      {{"role": "PATIENT", "gloss": "Object (optional)", "nzsl": "SIGN"}},
+      {{"role": "STATE", "gloss": "Feeling/Quality (optional)", "nzsl": "SIGN"}}
+    ],
+    "frames": [
+      {{"id": 1, "nvpair": ["AGENT", "LOCATION"], "caption_en": "English sentence.", "gloss": "SIGN SIGN"}},
+      {{"id": 2, "nvpair": ["AGENT", "ACTION", "PATIENT"], "caption_en": "English sentence.", "gloss": "SIGN SIGN SIGN"}},
+      {{"id": 3, "nvpair": ["AGENT", "STATE"], "caption_en": "English sentence.", "gloss": "SIGN SIGN"}}
+    ]
+  }},
   "activity_web": [
     {{"category": "Art", "description": "creative activity"}},
     {{"category": "NZSL Language", "description": "sign language activity"}},
@@ -146,6 +263,49 @@ DETAILED REQUIREMENTS:
    - Include opportunities to use the key signs
    - Make it engaging, positive, and age-appropriate
    - Incorporate movement and interaction opportunities
+
+4b. STORY_SCAFFOLD (roles + frames):
+   
+   This is the NEW structured approach to storytelling!
+   
+   ROLES (3-5 semantic roles):
+   - Identify the key semantic roles in your story
+   - AGENT: Who is doing the action (person, animal, character)
+   - ACTION: What is happening (main verb/activity)
+   - LOCATION: Where it takes place
+   - PATIENT: What is being acted upon (optional - if applicable)
+   - STATE: Emotion/quality/attribute (optional - if applicable)
+   
+   For each role provide:
+   - role: Uppercase semantic role name (AGENT, ACTION, LOCATION, PATIENT, STATE)
+   - gloss: Simple English word (e.g., "Fantail", "Fly", "Garden", "Flower", "Happy")
+   - nzsl: NZSL gloss in ALL CAPS (e.g., "FANTAIL", "FLY", "GARDEN", "FLOWER", "HAPPY")
+   
+   FRAMES (3-4 sequential steps):
+   - Break the story into 3-4 simple frames
+   - Each frame is one moment/action in the sequence
+   - Frame must include:
+     * id: Frame number (1, 2, 3, 4)
+     * nvpair: Array of role names used in this frame (e.g., ["AGENT", "LOCATION"])
+     * caption_en: English sentence describing frame (e.g., "The fantail is in the garden.")
+     * gloss: NZSL gloss sequence (e.g., "FANTAIL GARDEN")
+   
+   Example for "Fantail flies to flower in garden":
+   {{
+     "theme": "Pīwakawaka in the Garden",
+     "roles": [
+       {{"role": "AGENT", "gloss": "Fantail", "nzsl": "FANTAIL"}},
+       {{"role": "ACTION", "gloss": "Fly", "nzsl": "FLY"}},
+       {{"role": "LOCATION", "gloss": "Garden", "nzsl": "GARDEN"}},
+       {{"role": "PATIENT", "gloss": "Flower", "nzsl": "FLOWER"}},
+       {{"role": "STATE", "gloss": "Happy", "nzsl": "HAPPY"}}
+     ],
+     "frames": [
+       {{"id": 1, "nvpair": ["AGENT", "LOCATION"], "caption_en": "The fantail is in the garden.", "gloss": "FANTAIL GARDEN"}},
+       {{"id": 2, "nvpair": ["AGENT", "ACTION", "PATIENT"], "caption_en": "The fantail flies to the flower.", "gloss": "FANTAIL FLY-TO FLOWER"}},
+       {{"id": 3, "nvpair": ["AGENT", "STATE"], "caption_en": "The fantail is happy.", "gloss": "FANTAIL HAPPY"}}
+     ]
+   }}
 
 5. ACTIVITY_WEB (exactly 4 activities):
    
