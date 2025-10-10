@@ -1,10 +1,10 @@
 [phases.setup]
-nixPkgs = ['nodejs', 'python312']
+nixPkgs = ['nodejs', 'python312', 'python312Packages.pip']
 
 [phases.install]
 cmds = [
     'cd frontend && npm install && npm run build && cd ..',
-    'pip install -r requirements.txt'
+    'python3.12 -m pip install -r requirements.txt'
 ]
 
 [start]
