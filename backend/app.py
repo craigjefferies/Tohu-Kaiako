@@ -11,11 +11,15 @@ from fastapi.templating import Jinja2Templates
 from .llm import generate_pack
 from .schemas import (
     Activity,
+    BBox,
+    ExportOptions,
     GenerateRequest,
     GenerateResponse,
     NZSLStoryPrompt,
     SemanticComponent,
     StoryScaffold,
+    SymbolCard,
+    VSDHotspot,
 )
 
 logger = logging.getLogger("tohu-kaiako")
@@ -50,6 +54,32 @@ async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
         if "story_scaffold" in text_json:
             story_scaffold = StoryScaffold(**text_json["story_scaffold"])
         
+        # Parse vsd_hotspots if present
+        vsd_hotspots = []
+        if "vsd_hotspots" in text_json:
+            vsd_hotspots = [
+                VSDHotspot(
+                    id=h["id"],
+                    role=h["role"],
+                    label_en=h["label_en"],
+                    label_te_reo=h.get("label_te_reo", ""),
+                    nzsl_gloss=h["nzsl_gloss"],
+                    bbox=BBox(**h["bbox"]),
+                    teacher_prompt=h["teacher_prompt"]
+                )
+                for h in text_json["vsd_hotspots"]
+            ]
+        
+        # Parse symbol_board if present
+        symbol_board = []
+        if "symbol_board" in text_json:
+            symbol_board = [SymbolCard(**card) for card in text_json["symbol_board"]]
+        
+        # Parse exports if present
+        exports = None
+        if "exports" in text_json:
+            exports = ExportOptions(**text_json["exports"])
+        
         response_payload: Dict[str, Any] = {
             "image_url": scene_images["scene"],
             "nzsl_story_prompt": NZSLStoryPrompt(**text_json["nzsl_story_prompt"]),
@@ -58,6 +88,9 @@ async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
             "learning_prompts": text_json.get("learning_prompts", []),
             "scene_images": scene_images,
             "story_scaffold": story_scaffold,
+            "vsd_hotspots": vsd_hotspots,
+            "symbol_board": symbol_board,
+            "exports": exports,
         }
         return GenerateResponse(**response_payload)
     except HTTPException:

@@ -49,6 +49,51 @@ class StoryScaffold(BaseModel):
     frames: List[StoryFrame]  # Sequential story frames
 
 
+class BBox(BaseModel):
+    """Bounding box with normalized coordinates (0-1) for hotspot positioning."""
+    model_config = ConfigDict(extra='ignore')
+    
+    x: float  # Left position (0-1)
+    y: float  # Top position (0-1)
+    w: float  # Width (0-1)
+    h: float  # Height (0-1)
+
+
+class VSDHotspot(BaseModel):
+    """Visual Scene Display hotspot for interactive questioning."""
+    model_config = ConfigDict(extra='ignore')
+    
+    id: str  # Unique ID (e.g., "AGENT_1", "ACTION_1")
+    role: str  # Semantic role: AGENT, ACTION, LOCATION, PATIENT, STATE
+    label_en: str  # English label (e.g., "Fantail")
+    label_te_reo: str = ""  # Te reo Māori label (e.g., "Pīwakawaka")
+    nzsl_gloss: str  # NZSL gloss (e.g., "FANTAIL")
+    bbox: BBox  # Bounding box coordinates
+    teacher_prompt: str  # Scaffolding question (e.g., "WHO is here?")
+
+
+class SymbolCard(BaseModel):
+    """Symbol card for Colourful Semantics-based learning."""
+    model_config = ConfigDict(extra='ignore')
+    
+    type: str  # agent, action, object, setting, state
+    label_en: str  # English label
+    label_te_reo: str = ""  # Te reo Māori label
+    nzsl_gloss: str  # NZSL gloss
+    image_ref: str  # Reference to component image (filename or data URI)
+    alt: str  # Alt text for accessibility
+    colour: str  # Colourful Semantics color: orange, yellow, green, blue, purple
+
+
+class ExportOptions(BaseModel):
+    """Export configuration for PDF and HTML outputs."""
+    model_config = ConfigDict(extra='ignore')
+    
+    pdf: Optional[dict] = None  # PDF export settings
+    html_offline: Optional[dict] = None  # HTML export settings
+    json_data: Optional[dict] = None  # JSON data export settings
+
+
 class NZSLStoryPrompt(BaseModel):
     model_config = ConfigDict(extra='ignore')
     
@@ -84,4 +129,7 @@ class GenerateResponse(BaseModel):
     semantic_components: List[SemanticComponent] = []
     learning_prompts: List[str] = []
     scene_images: SceneImages
-    story_scaffold: Optional[StoryScaffold] = None  # New frames-based story structure
+    story_scaffold: Optional[StoryScaffold] = None  # Frames-based story structure
+    vsd_hotspots: List[VSDHotspot] = []  # Visual Scene Display hotspots
+    symbol_board: List[SymbolCard] = []  # Symbol cards for learning
+    exports: Optional[ExportOptions] = None  # Export configuration

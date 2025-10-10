@@ -118,9 +118,86 @@ Arrange elements so their relationships are clear and children can identify:
 - WHERE it takes place
 - How elements interact
 
+SPATIAL REQUIREMENTS FOR INTERACTIVE HOTSPOTS:
+- Position AGENT (character/person) in distinct area with clear boundaries (15-20% padding around)
+- Show ACTION through clear visual cues (movement lines, posture, gestures) - separate from static background
+- Place SETTING/LOCATION elements in identifiable regions (use left/right/foreground/background separation)
+- Avoid overlapping key semantic elements (character should not obscure location features)
+- Use depth cues to separate foreground (WHO/WHAT) from background (WHERE)
+- Leave negative space around each key element for visual clarity and tap targets
+- Ensure AGENT faces are visible and expressions are clear (not occluded by objects)
+
 Make the scene warm, inviting, and suitable for storytelling and retelling activities."""
     
     return unified_image_prompt(theme, "SCENE", asset_spec, scene_seed)
+
+
+def vsd_hotspot_plan_prompt(theme: str, roles: List[Dict[str, str]]) -> str:
+    """
+    Generate a prompt for creating VSD hotspot bbox coordinates based on story roles.
+    This is a lightweight LLM call to estimate bounding box positions.
+    
+    Args:
+        theme: The story theme
+        roles: List of story roles with role, gloss, and nzsl fields
+    
+    Returns:
+        Prompt string that will return JSON with VSD hotspots
+    """
+    roles_list = "\n".join(
+        f"- {role['role']}: {role['gloss']} ({role['nzsl']})"
+        for role in roles
+    )
+    
+    return f"""You are estimating bounding box coordinates for Visual Scene Display hotspots.
+
+THEME: "{theme}"
+
+SEMANTIC ROLES TO LOCATE:
+{roles_list}
+
+Return ONLY valid JSON with this structure:
+
+{{
+  "vsd_hotspots": [
+    {{"id": "AGENT_1", "role": "AGENT", "label_en": "Label", "label_te_reo": "", "nzsl_gloss": "SIGN",
+      "bbox": {{"x": 0.55, "y": 0.30, "w": 0.25, "h": 0.30}},
+      "teacher_prompt": "LOOK SCENE. WHO?"}},
+    {{"id": "ACTION_1", "role": "ACTION", "label_en": "Label", "label_te_reo": "", "nzsl_gloss": "SIGN",
+      "bbox": {{"x": 0.45, "y": 0.25, "w": 0.28, "h": 0.22}},
+      "teacher_prompt": "WHAT DO?"}},
+    {{"id": "LOCATION_1", "role": "LOCATION", "label_en": "Label", "label_te_reo": "", "nzsl_gloss": "SIGN",
+      "bbox": {{"x": 0.10, "y": 0.55, "w": 0.40, "h": 0.35}},
+      "teacher_prompt": "WHERE?"}}
+  ],
+  "notes": "Bbox coordinates are estimates for typical scene composition. Teachers can adjust in UI."
+}}
+
+BBOX GUIDELINES:
+- Normalized coordinates: 0-1 (0 = left/top, 1 = right/bottom)
+- x, y = top-left corner position
+- w, h = width and height
+- Keep 0.05 margin from edges (avoid x<0.05, x+w>0.95, y<0.05, y+h>0.95)
+- Typical positioning:
+  * AGENT (character): Center-right or center, mid-height (x: 0.50-0.65, y: 0.25-0.40, w: 0.20-0.30, h: 0.25-0.35)
+  * ACTION (movement/gesture): Overlapping or near agent, slightly higher (x: 0.40-0.60, y: 0.20-0.35, w: 0.25-0.35, h: 0.18-0.28)
+  * LOCATION (background/setting): Lower portion, wider area (x: 0.10-0.20, y: 0.50-0.65, w: 0.35-0.50, h: 0.30-0.40)
+  * PATIENT (object being acted on): Near agent or in foreground (x: 0.20-0.40, y: 0.35-0.50, w: 0.15-0.25, h: 0.20-0.30)
+  * STATE (expression/emotion): Face/head area of agent (x: 0.55-0.70, y: 0.25-0.35, w: 0.12-0.18, h: 0.12-0.18)
+
+TEACHER PROMPTS (use NZSL-first structure):
+- AGENT → "LOOK SCENE. WHO?" or "WHO HERE?"
+- ACTION → "WHAT DO?" or "WHAT HAPPENING?"
+- LOCATION → "WHERE?" or "WHERE THIS?"
+- PATIENT → "WHAT?" or "WHAT SEE?"
+- STATE → "HOW FEEL?" or "FEEL WHAT?"
+
+CRITICAL:
+- Return ONLY the JSON object
+- Create one hotspot for each role provided
+- Use sensible default positions (these are approximations)
+- ID format: "{{ROLE}}_1" (e.g., "AGENT_1", "LOCATION_1")
+""".strip()
 
 
 def image_prompt(theme: str, keywords: str, components: Optional[List[Dict[str, str]]] = None) -> str:
@@ -210,6 +287,25 @@ Return ONLY valid JSON with this EXACT structure:
       {{"id": 3, "nvpair": ["AGENT", "STATE"], "caption_en": "English sentence.", "gloss": "SIGN SIGN"}}
     ]
   }},
+  "vsd_hotspots": [
+    {{"id": "AGENT_1", "role": "AGENT", "label_en": "Character", "label_te_reo": "māori_word", "nzsl_gloss": "SIGN",
+      "bbox": {{"x": 0.60, "y": 0.35, "w": 0.20, "h": 0.25}},
+      "teacher_prompt": "LOOK SCENE. WHO?"}},
+    {{"id": "ACTION_1", "role": "ACTION", "label_en": "Action", "label_te_reo": "māori_word", "nzsl_gloss": "SIGN",
+      "bbox": {{"x": 0.45, "y": 0.28, "w": 0.22, "h": 0.18}},
+      "teacher_prompt": "WHAT DO?"}},
+    {{"id": "LOCATION_1", "role": "LOCATION", "label_en": "Place", "label_te_reo": "māori_word", "nzsl_gloss": "SIGN",
+      "bbox": {{"x": 0.15, "y": 0.55, "w": 0.35, "h": 0.30}},
+      "teacher_prompt": "WHERE?"}}
+  ],
+  "symbol_board": [
+    {{"type": "agent", "label_en": "Character", "label_te_reo": "māori_word", "nzsl_gloss": "SIGN",
+      "image_ref": "agent_character.png", "alt": "Character description", "colour": "orange"}},
+    {{"type": "action", "label_en": "Action", "label_te_reo": "māori_word", "nzsl_gloss": "SIGN",
+      "image_ref": "action_doing.png", "alt": "Action description", "colour": "yellow"}},
+    {{"type": "setting", "label_en": "Place", "label_te_reo": "māori_word", "nzsl_gloss": "SIGN",
+      "image_ref": "setting_place.png", "alt": "Setting description", "colour": "blue"}}
+  ],
   "activity_web": [
     {{"category": "Art", "description": "creative activity"}},
     {{"category": "NZSL Language", "description": "sign language activity"}},
@@ -223,11 +319,16 @@ Return ONLY valid JSON with this EXACT structure:
     {{"type": "setting", "label": "Place", "nzsl_sign": "SIGN", "semantic_role": "Where it is happening"}}
   ],
   "learning_prompts": [
-    "WHO question",
-    "WHAT question", 
-    "WHERE question",
-    "Extension question"
-  ]
+    {{"type": "wh_question", "nzsl": "LOOK SCENE. WHO?", "en": "Who do you see in the scene?"}},
+    {{"type": "wh_question", "nzsl": "WHAT DO?", "en": "What are they doing?"}},
+    {{"type": "wh_question", "nzsl": "WHERE?", "en": "Where is this happening?"}},
+    {{"type": "wh_question", "nzsl": "HOW FEEL?", "en": "How do they feel?"}}
+  ],
+  "exports": {{
+    "pdf": {{"include": ["symbol_board", "story_scaffold", "vsd_hotspots", "learning_prompts"], "paper": "A4"}},
+    "html_offline": {{"include_media_inline": true, "vsd_hotspots": true}},
+    "json_data": {{"include_all_metadata": true, "format": "tohu_kaiako_v1"}}
+  }}
 }}
 
 DETAILED REQUIREMENTS:
@@ -375,21 +476,130 @@ DETAILED REQUIREMENTS:
    - Setting: {{"type": "setting", "label": "Garden", "nzsl_sign": "GARDEN", "semantic_role": "Where the bird is"}}
    - Attribute: {{"type": "attribute", "label": "Happy", "nzsl_sign": "HAPPY", "semantic_role": "How the bird feels"}}
 
-7. LEARNING_PROMPTS (3-5 scaffolding questions):
+7. LEARNING_PROMPTS (4-6 structured prompts):
    
-   Create questions that help learners identify semantic roles:
+   Create NZSL-first scaffolding questions with English support:
    
-   - WHO question: "WHO do you see in this scene?" or "WHO is doing something?"
-   - WHAT question: "WHAT are they doing?" or "WHAT is happening?"
-   - WHERE question: "WHERE is this happening?" or "WHERE are they?"
-   - OBJECT question (if applicable): "WHAT are they using/doing it to?"
-   - FEELING question (if applicable): "HOW do they feel?"
+   NZSL-FIRST FORMAT:
+   - Use NZSL sentence structure (topic-comment, visual-spatial grammar)
+   - Short, directive commands followed by WH-question
+   - Example: "LOOK SCENE. WHO?" not "Who do you see?"
    
-   Example prompts:
-   - "WHO is flying in the garden?"
-   - "WHAT is the fantail doing?"
-   - "WHERE is the bird flying?"
-   - "HOW does the fantail feel?"
+   Required prompt types:
+   - WHO question: {{"type": "wh_question", "nzsl": "LOOK SCENE. WHO?", "en": "Who do you see in the scene?"}}
+   - WHAT question: {{"type": "wh_question", "nzsl": "WHAT DO?", "en": "What are they doing?"}}
+   - WHERE question: {{"type": "wh_question", "nzsl": "WHERE?", "en": "Where is this happening?"}}
+   - FEELING question: {{"type": "wh_question", "nzsl": "HOW FEEL?", "en": "How do they feel?"}}
+   
+   Optional extensions:
+   - Sequence: {{"type": "sequence", "nzsl": "FIRST? NEXT? FINISH?", "en": "What happened first? Then? At the end?"}}
+   - Why: {{"type": "extension", "nzsl": "WHY THINK?", "en": "Why do you think that happened?"}}
+   
+   CRITICAL:
+   - NZSL must be primary (listed first)
+   - English is support/translation only
+   - Use authentic NZSL structure, not signed English
+
+8. VSD_HOTSPOTS (3-5 hotspots matching story_scaffold roles):
+   
+   Create interactive hotspots for Visual Scene Display questioning:
+   
+   BBOX COORDINATES:
+   - Use normalized 0-1 coordinates (0=left/top, 1=right/bottom)
+   - x, y = top-left corner of bbox
+   - w, h = width and height
+   - Estimate sensible positions (teacher can adjust in UI)
+   - Avoid edge clipping (keep 0.05 margin from edges)
+   
+   MAPPING TO STORY ROLES:
+   - Create one hotspot for each role in story_scaffold.roles
+   - Use same gloss and labels
+   - ID format: "{{"role"}}_{{"number"}}" (e.g., "AGENT_1", "LOCATION_1")
+   
+   TEACHER PROMPTS:
+   - AGENT → "LOOK SCENE. WHO?" or "WHO HERE?"
+   - ACTION → "WHAT DO?" or "WHAT HAPPENING?"
+   - LOCATION → "WHERE?" or "WHERE THIS?"
+   - PATIENT/OBJECT → "WHAT?" or "WHAT SEE?"
+   - STATE → "HOW FEEL?" or "FEEL WHAT?"
+   
+   TE REO MĀORI LABELS:
+   - Provide te reo Māori labels for common nouns where known
+   - Examples: fantail→pīwakawaka, garden→māra, child→tamaiti
+   - Leave empty ("") if unsure - teacher can add later
+   
+   Example for "Fantail flies in garden":
+   [
+     {{"id": "AGENT_1", "role": "AGENT", "label_en": "Fantail", "label_te_reo": "pīwakawaka",
+       "nzsl_gloss": "FANTAIL", "bbox": {{"x": 0.55, "y": 0.30, "w": 0.25, "h": 0.30}},
+       "teacher_prompt": "LOOK SCENE. WHO?"}},
+     {{"id": "ACTION_1", "role": "ACTION", "label_en": "Fly", "label_te_reo": "rere",
+       "nzsl_gloss": "FLY", "bbox": {{"x": 0.45, "y": 0.22, "w": 0.30, "h": 0.20}},
+       "teacher_prompt": "WHAT DO?"}},
+     {{"id": "LOCATION_1", "role": "LOCATION", "label_en": "Garden", "label_te_reo": "māra",
+       "nzsl_gloss": "GARDEN", "bbox": {{"x": 0.10, "y": 0.50, "w": 0.40, "h": 0.40}},
+       "teacher_prompt": "WHERE?"}}
+   ]
+
+9. SYMBOL_BOARD (3-5 cards matching story_scaffold roles):
+   
+   Create symbol cards using Colourful Semantics colour coding:
+   
+   COLOUR MAPPING:
+   - agent (WHO) → orange
+   - action (WHAT DO) → yellow
+   - object/patient (WHAT) → green
+   - setting/location (WHERE) → blue
+   - state/attribute (HOW/FEELING) → purple
+   
+   IMAGE_REF:
+   - Use descriptive filename: "{{"type"}}_{{"label"}}.png"
+   - Examples: "agent_fantail.png", "action_fly.png", "setting_garden.png"
+   
+   ALT TEXT:
+   - Describe the image for screen readers
+   - Format: "{{"Label"}}, {{"brief description"}}"
+   - Example: "Fantail, a small native New Zealand bird"
+   
+   TE REO MĀORI:
+   - Same as VSD hotspots - provide where known, leave empty if unsure
+   
+   MAPPING:
+   - Create one symbol card for each role in story_scaffold.roles
+   - Use same labels and glosses
+   - Match semantic role to Colourful Semantics colour
+   
+   Example:
+   [
+     {{"type": "agent", "label_en": "Fantail", "label_te_reo": "pīwakawaka",
+       "nzsl_gloss": "FANTAIL", "image_ref": "agent_fantail.png",
+       "alt": "Fantail, small native bird with fan-shaped tail", "colour": "orange"}},
+     {{"type": "action", "label_en": "Fly", "label_te_reo": "rere",
+       "nzsl_gloss": "FLY", "image_ref": "action_fly.png",
+       "alt": "Flying motion with wings spread", "colour": "yellow"}},
+     {{"type": "setting", "label_en": "Garden", "label_te_reo": "māra",
+       "nzsl_gloss": "GARDEN", "image_ref": "setting_garden.png",
+       "alt": "Garden with plants and flowers", "colour": "blue"}}
+   ]
+
+10. EXPORTS (fixed structure):
+    
+    Always return this exact structure for export configuration:
+    
+    {{
+      "pdf": {{
+        "include": ["symbol_board", "story_scaffold", "vsd_hotspots", "learning_prompts"],
+        "paper": "A4"
+      }},
+      "html_offline": {{
+        "include_media_inline": true,
+        "vsd_hotspots": true
+      }},
+      "json_data": {{
+        "include_all_metadata": true,
+        "format": "tohu_kaiako_v1"
+      }}
+    }}
 
 THEME: "{theme}"
 LEVEL: "{level}"
@@ -397,10 +607,13 @@ ADDITIONAL CONTEXT: "{keywords if keywords else 'General early learning context'
 
 CRITICAL RULES:
 - Return ONLY the JSON object - no markdown code blocks, no explanations
+- VSD hotspots, symbol board, and story scaffold MUST use consistent labels/glosses
 - Ensure all activities are safe, inclusive, and developmentally appropriate
 - Use Aotearoa NZ context where relevant (native birds, local environments, etc.)
 - Make content joyful, playful, and engaging for young children
 - Respect Deaf culture and NZSL as a living language
 - SEMANTIC COMPONENTS must be clear, distinct, and support scene-based learning
-- LEARNING PROMPTS should scaffold semantic role awareness (WHO, WHAT, WHERE)
+- LEARNING PROMPTS must use NZSL-first structure (not signed English)
+- BBOX coordinates are estimates - teachers will adjust in UI
+- TE REO MĀORI labels should be accurate where provided, empty if unsure
 """.strip()
