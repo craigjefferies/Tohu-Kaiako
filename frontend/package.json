@@ -1,0 +1,11 @@
+{
+  "name": "tohu-kaiako-frontend",
+  "private": true,
+  "scripts": {
+    "dev": "tailwindcss -i ./input.css -o ./static/styles.css --watch",
+    "build": "tailwindcss -i ./input.css -o ./static/styles.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
