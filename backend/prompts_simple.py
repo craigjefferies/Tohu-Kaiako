@@ -99,9 +99,9 @@ Return ONLY valid JSON (no markdown, no explanations):
     {{"type": "setting", "label": "Place", "nzsl_sign": "SIGN", "semantic_role": "Where"}}
   ],
   "learning_prompts": [
-    "WHO do you see?",
-    "WHAT are they doing?",
-    "WHERE is this happening?"
+    {{"type": "wh_question", "nzsl": "WHO?", "en": "Who do you see?"}},
+    {{"type": "wh_question", "nzsl": "WHAT DO?", "en": "What are they doing?"}},
+    {{"type": "wh_question", "nzsl": "WHERE?", "en": "Where is this?"}}
   ]
 }}
 

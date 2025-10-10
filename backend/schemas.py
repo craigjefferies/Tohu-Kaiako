@@ -127,9 +127,9 @@ class GenerateResponse(BaseModel):
     nzsl_story_prompt: NZSLStoryPrompt
     activity_web: List[Activity]
     semantic_components: List[SemanticComponent] = []
-    learning_prompts: List[str] = []
+    learning_prompts: List[str] = []  # Simple strings for MVP
     scene_images: SceneImages
-    story_scaffold: Optional[StoryScaffold] = None  # Frames-based story structure
-    vsd_hotspots: List[VSDHotspot] = []  # Visual Scene Display hotspots
-    symbol_board: List[SymbolCard] = []  # Symbol cards for learning
-    exports: Optional[ExportOptions] = None  # Export configuration
+    story_scaffold: Optional[StoryScaffold] = None
+    # VSD/Symbol features available but optional for MVP
+    vsd_hotspots: List[dict] = []
+    symbol_board: List[dict] = []
