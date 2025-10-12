@@ -8,16 +8,14 @@ Tohu Kaiako empowers kaiako (teachers) to create rich, culturally responsive lea
 
 ## 🌱 What is Tohu Kaiako?
 
-Tohu Kaiako is a free web application that generates complete, ready-to-use learning packs for tamariki (children) aged 3-5 years. Each pack includes:
+Tohu Kaiako is a free web application that generates bite-sized bilingual prompts for tamariki (children) aged 3-5 years. Each pack now focuses on one clear sentence and includes:
 
-- **Visual scenes** that support storytelling and meaning-making
-- **NZSL story prompts** with key signs, classifiers, and facial expressions
-- **Semantic components** that break down scenes into WHO/WHAT/WHERE elements
-- **Story frames** for sequencing and retelling activities
-- **Cross-curricular activities** spanning Art, NZSL Language, Maths, and Deaf Culture
-- **Scaffolding questions** to support children's understanding
+- **Four illustrations**: noun, verb, where, and the full scene for quick visual sequencing
+- **NZSL + English sentence**: a paired gloss and simple English line you can model immediately
+- **Language steps**: a three-step teaching flow (Name the noun → Add the verb → Show where)
+- **One-page PDF**: printable layout with all four images and the bilingual sentence
 
-Simply enter a theme (like "Fantail in the garden" or "Playing at the beach"), and within moments you'll have a complete learning pack ready to print, share, or use digitally.
+Simply enter a theme (like "Fantail in the garden" or "Playing at the beach") and within moments you’ll have a concise resource ready to project, print, or share.
 
 ---
 
@@ -55,72 +53,18 @@ Enter any theme relevant to your tamariki's interests and experiences:
 - Emotions: "Feeling proud", "Sharing with friends"
 
 ### 2. Generate Your Pack
-The app creates a complete learning pack with:
+Within a few seconds the app returns:
 
-#### 🎬 **Scene Preview Strip**
-At the top of every pack, you'll see a visual strip displaying all four generated images side-by-side:
-
-| Object | Action | Setting | Full Scene |
-|--------|--------|---------|------------|
-| 🖼️ | 🖼️ | 🖼️ | 🖼️ |
-
-This **instant visual overview** lets you:
-- Quickly assess the coherence of the generated scene
-- See all components at a glance
-- Choose which images to focus on for different activities
-- Print the strip as a standalone sequencing tool
-
-#### 🎨 **Learning Image Set**
-Four interconnected images designed for sequencing and storytelling:
-- **Object Focus**: Isolated element (e.g., the bird)
-- **Action Focus**: The action happening (e.g., flying)
-- **Setting Focus**: Where it occurs (e.g., garden)
-- **Full Scene**: Everything together in context
-
-Each image is professionally styled with consistent visual elements, modern Tailwind CSS responsive design, and optimized sizing for both screen and print.
-
-#### 🧱 **Scene Components**
-Semantic breakdown showing:
-- **WHO** - Agent (person/animal doing the action)
-- **WHAT DOING** - Action (what's happening)
-- **WHAT** - Object (what's being acted upon)
-- **WHERE** - Setting (location/context)
-- **HOW** - Attribute (qualities/feelings)
-
-Each component includes the English label and NZSL sign name, building children's understanding of how meaning is constructed.
-
-#### 📖 **Story Frames**
-Sequential frames for retelling and sequencing:
-- Numbered steps building the narrative
-- English captions for comprehension
-- NZSL glosses showing sign sequence
-- Semantic role markers (AGENT, ACTION, LOCATION)
-
-Perfect for:
-- Sequencing card activities
-- Story retelling practice
-- Bilingual expression
-- Sign-along storytelling
-
-#### 🎨 **Activity Web**
-Four ready-to-use activities:
-- **Art**: Creative expression connected to the theme
-- **NZSL Language**: Interactive signing games and practice
-- **Maths**: Hands-on numeracy experiences
-- **Deaf Culture**: Cultural awareness and celebration
-
-#### 💬 **Scaffolding Questions**
-Thoughtful prompts to support children's learning:
-- WHO questions (identifying agents)
-- WHAT questions (understanding actions)
-- WHERE questions (recognizing settings)
-- Extension questions for deeper thinking
+- **Four tiles**: an isolated noun, the same subject doing the verb, a where/location tile, and a combined scene. Each image is grounded in everyday Aotearoa NZ experiences so tamariki recognise what they see.
+- **Teaching flow**: a three-step checklist (“Name the noun”, “Add the verb”, “Show where”) to guide your conversation.
+- **Bilingual sentence**: NZSL gloss and simple English sentence built from the generated components.
+- **Download options**: preview or download a one-page PDF that lays out the four tiles with the bilingual sentence for printing or sharing with whānau.
 
 ### 3. Use & Adapt
-- **Print** for hands-on manipulation and display
-- **Download** as PDF for digital sharing
-- **Project** on screen for group discussions
-- **Adapt** to your tamariki's needs and interests
+- **Print** the single-page PDF as a prompt card or learning centre resource
+- **Project** the tiles for group kōrero (discussion) and signing practice
+- **Share** digitally with whānau to reinforce language at home
+- **Regenerate** with new prompts to build a set around the same theme
 
 ---
 
@@ -264,19 +208,19 @@ No login or account required—just visit and create!
 4. Use the sign in natural contexts throughout the day
 5. Celebrate approximations—signing doesn't have to be "perfect"
 
-### Using Story Frames
-1. Present frames out of order—have children sequence them
-2. Act out each frame with signs and movement
-3. Create your own version by changing one element
-4. Record children signing the story
-5. Make physical cards for repeated practice
+### Using the Noun → Verb → Where Flow
+1. Reveal the noun tile first and ask tamariki to name/sign it
+2. Add the verb tile and model the full NZSL gloss (noun + verb)
+3. Show the where tile and complete the bilingual sentence together
+4. Reinforce by pointing to the combined scene and retelling the whole idea
+5. Invite tamariki to swap in new nouns, verbs, or locations they already know
 
 ### Extending Activities
-1. Follow children's interests—generate related packs
-2. Create a "theme week" with multiple related packs
-3. Invite Deaf community members to share experiences
-4. Document children's learning with photos and videos
-5. Display packs in your learning environment
+1. Generate multiple variations around the same theme to compare sentences
+2. Pair tiles with real-world objects or photos from your centre
+3. Invite Deaf community members to model the NZSL sentence
+4. Create a wall display that grows with each new noun → verb → where sentence
+5. Encourage tamariki to draw their own version and label with NZSL glosses
 
 ---
 
