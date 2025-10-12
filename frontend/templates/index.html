@@ -85,228 +85,69 @@
         x-cloak
       ></p>
 
-      <section x-show="result" class="mt-6 bg-white p-4 rounded-xl shadow print:p-0" x-cloak>
-        <div class="flex justify-between items-center mb-3 print:mb-2">
-          <h2 class="text-xl font-semibold" x-text="text.generatedHeading">Generated Pack</h2>
-          <div class="flex gap-2 print:hidden">
-            <button @click="window.print()" class="border px-3 py-1 rounded hover:bg-gray-50 transition-colors" type="button">
-              <span x-text="text.print">Tā / Print</span>
-            </button>
-            <button @click="downloadPDF()" class="border px-3 py-1 rounded hover:bg-gray-50 transition-colors" type="button">
-              <span x-text="text.download">Tikiake / Download PDF</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="grid gap-4">
-          <!-- Scene Preview Strip - Quick Visual Overview -->
-          <div x-show="result.scene_images" class="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-xl p-4 border-2 border-indigo-200">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="font-semibold text-lg text-indigo-900 flex items-center gap-2">
-                <span class="text-2xl">🎬</span>
-                Scene Preview Strip
-              </h3>
-              <span class="text-xs font-medium text-indigo-600 bg-white px-3 py-1 rounded-full">4 Images Generated</span>
+      <section x-show="result" class="mt-6 bg-white p-6 rounded-xl shadow print:p-0" x-cloak>
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-gray-500">Theme</p>
+              <h2 class="text-2xl font-semibold text-gray-900" x-text="result.theme"></h2>
             </div>
-            <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2 md:gap-3">
-              <template
-                x-for="(frame, idx) in [
-                  { key: 'object', label: 'Object', emoji: '🔵' },
-                  { key: 'action', label: 'Action', emoji: '⚡' },
-                  { key: 'setting', label: 'Setting', emoji: '🏞️' },
-                  { key: 'scene', label: 'Full Scene', emoji: '🎨' },
-                ]"
-                :key="frame.key"
-              >
-                <div class="group relative">
-                  <div class="aspect-square rounded-lg overflow-hidden border-2 border-white shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white max-h-32 md:max-h-40">
-                    <img
-                      :src="result.scene_images[frame.key]"
-                      class="w-full h-full object-cover"
-                      :alt="`${frame.label} preview`"
-                    />
-                  </div>
-                  <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <span x-text="frame.emoji + ' ' + frame.label"></span>
-                  </div>
-                </div>
-              </template>
+            <div class="flex gap-2 print:hidden">
+              <button @click="previewPDF()" class="border px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" type="button">
+                Preview PDF
+              </button>
+              <button @click="downloadPDF()" class="bg-black text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity" type="button">
+                Download PDF
+              </button>
             </div>
-            <p class="text-xs text-indigo-700 mt-3 text-center font-medium">
-              ⬇️ Scroll down for detailed views, components, story frames & activities
-            </p>
           </div>
 
-          <div x-show="result.scene_images" class="space-y-3 print:break-inside-avoid">
-            <h3 class="font-medium text-base md:text-lg border-b pb-2">🎬 Learning Image Set</h3>
-            <p class="text-xs sm:text-sm text-gray-600">
-              Use the isolated images first, then reveal the full scene to support sequencing and retelling.
-            </p>
+          <div class="grid gap-6">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <template
-                x-for="frame in [
-                  { key: 'object', label: 'Object Focus' },
-                  { key: 'action', label: 'Action Focus' },
-                  { key: 'setting', label: 'Setting Focus' },
-                  { key: 'scene', label: 'Full Scene' },
-                ]"
-                :key="frame.key"
-              >
-                <figure class="border rounded-lg bg-gray-100 p-2 flex flex-col gap-2">
+              <template x-for="card in [
+                { key: 'object', label: 'Noun', tip: 'Show the main thing we are naming.' },
+                { key: 'action', label: 'Verb', tip: 'Show the same subject doing the action.' },
+                { key: 'setting', label: 'Where', tip: 'Show where it happens without changing who.' },
+                { key: 'scene', label: 'Scene', tip: 'Combine the subject, action, and place together.' },
+              ]" :key="card.key">
+                <figure class="flex flex-col gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                  <div class="text-xs font-semibold uppercase tracking-wide text-gray-500" x-text="card.label"></div>
                   <img
-                    :src="result.scene_images[frame.key]"
-                    class="rounded-md object-contain w-full h-20 md:h-24 bg-white"
-                    :alt="`${frame.label} illustration`"
+                    class="w-full aspect-square object-cover rounded-lg bg-white"
+                    :src="result.scene_images[card.key]"
+                    :alt="`${card.label} illustration`"
                   />
-                  <figcaption class="text-xs font-medium text-gray-700 text-center" x-text="frame.label"></figcaption>
+                  <figcaption class="text-xs text-gray-600 leading-snug" x-text="card.tip"></figcaption>
                 </figure>
               </template>
             </div>
-          </div>
-          <img
-            x-show="result.image_url"
-            :src="result.image_url"
-            alt="Full scene provocation image"
-            class="rounded-lg max-h-48 md:max-h-56 w-full object-contain bg-gray-100"
-          />
 
-          <!-- Semantic Components (Scene-Based Learning) -->
-          <div x-show="result.semantic_components && result.semantic_components.length > 0" class="print:break-inside-avoid">
-            <h3 class="font-medium text-base md:text-lg border-b pb-2">🧱 Scene Components</h3>
-            <p class="text-xs sm:text-sm text-gray-600 mt-2 mb-3">These are the building blocks of the scene - help tamariki identify each part!</p>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <template x-for="component in result.semantic_components" :key="component.label">
-                <div class="border rounded-lg p-3 bg-gradient-to-br from-blue-50 to-white hover:shadow-md transition-shadow duration-200 print:break-inside-avoid">
-                  <div class="text-xs font-semibold text-blue-600 uppercase" x-text="component.type"></div>
-                  <div class="text-base md:text-lg font-bold mt-1" x-text="component.label"></div>
-                  <div class="text-xs sm:text-sm font-mono bg-blue-100 px-2 py-1 rounded mt-2" x-text="component.nzsl_sign"></div>
-                  <div class="text-xs text-gray-600 mt-2 italic" x-text="component.semantic_role"></div>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Learning Prompts (Scaffolding Questions) -->
-          <div x-show="result.learning_prompts && result.learning_prompts.length > 0" class="print:break-inside-avoid">
-            <h3 class="font-medium text-lg border-b pb-2 mb-3">💬 Ask Tamariki</h3>
-            <p class="text-sm text-gray-600 mb-3">Use these questions to help children understand the scene:</p>
-            <div class="grid gap-2">
-              <template x-for="(prompt, idx) in result.learning_prompts" :key="prompt">
-                <div class="flex items-start gap-3 p-3 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all duration-200">
-                  <span class="flex-shrink-0 w-7 h-7 bg-gray-600 text-white rounded-full flex items-center justify-center text-sm font-bold"
-                        x-text="idx + 1"></span>
-                  <p class="text-gray-800 font-medium flex-1" x-text="prompt"></p>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- Story Frames (Sequencing Activity) -->
-          <div x-show="result.story_scaffold && result.story_scaffold.frames" class="print:break-inside-avoid">
-            <h3 class="font-medium text-base md:text-lg border-b pb-2">📖 Story Frames (Sequencing)</h3>
-            <p class="text-xs sm:text-sm text-gray-600 mt-2 mb-3">
-              Use these frames for sequencing activities. Children can arrange and retell the story in NZSL or English.
-            </p>
-            
-            <!-- Semantic Roles Reference -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <h4 class="text-sm font-bold text-blue-900 mb-2">Story Roles:</h4>
-              <div class="flex flex-wrap gap-2">
-                <template x-for="role in result.story_scaffold.roles" :key="role.role">
-                  <span class="inline-flex items-center gap-1 bg-white border border-blue-300 rounded-full px-3 py-1 text-xs">
-                    <span class="font-bold text-blue-600" x-text="role.role"></span>:
-                    <span class="text-gray-700" x-text="role.gloss"></span>
-                    <span class="font-mono text-blue-800" x-text="`(${role.nzsl})`"></span>
-                  </span>
-                </template>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center space-y-4 print:break-inside-avoid">
+              <div>
+                <p class="text-xs uppercase tracking-wide text-amber-700">NZSL sentence</p>
+                <p class="text-3xl font-bold text-amber-900 font-mono" x-text="result.sentence_nzsl"></p>
+              </div>
+              <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500">English sentence</p>
+                <p class="text-xl text-gray-900 font-semibold" x-text="result.sentence_en"></p>
               </div>
             </div>
-            
-            <!-- Story Frames -->
-            <div class="grid gap-3">
-              <template x-for="frame in result.story_scaffold.frames" :key="frame.id">
-                <div class="border-2 border-gray-300 rounded-lg p-4 bg-white hover:border-blue-400 transition-colors">
-                  <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                      <span x-text="frame.id"></span>
-                    </div>
-                    <div class="flex-1">
-                      <div class="mb-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">English:</span>
-                        <p class="text-base text-gray-900" x-text="frame.caption_en"></p>
-                      </div>
-                      <div class="mb-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">NZSL Gloss:</span>
-                        <p class="text-base font-mono font-bold text-blue-700" x-text="frame.gloss"></p>
-                      </div>
-                      <div>
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Uses:</span>
-                        <div class="flex flex-wrap gap-1 mt-1">
-                          <template x-for="role_id in frame.nvpair" :key="role_id">
-                            <span class="inline-block bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded" x-text="role_id"></span>
-                          </template>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
 
-          <div>
-            <h3 class="font-medium" x-text="text.nzslHeading">NZSL Story Prompt</h3>
-            <ul class="list-disc ml-6">
-              <li>
-                <strong x-text="text.keySigns"></strong>:
-                <span x-text="result.nzsl_story_prompt.key_signs.join(', ')"></span>
-              </li>
-              <li>
-                <strong x-text="text.classifiers"></strong>:
-                <span x-text="result.nzsl_story_prompt.classifiers.join(', ')"></span>
-              </li>
-              <li>
-                <strong x-text="text.facialExpressions"></strong>:
-                <span x-text="result.nzsl_story_prompt.facial_expressions.join(', ')"></span>
-              </li>
-            </ul>
-            <h4 class="font-medium mt-2" x-text="text.storyOutline">Story outline</h4>
-            <ol class="list-decimal ml-6 mt-2">
-              <template x-for="step in result.nzsl_story_prompt.story_outline" :key="step">
-                <li x-text="step"></li>
-              </template>
-            </ol>
-          </div>
-
-          <div>
-            <h3 class="font-medium text-lg border-b pb-2 mb-4" x-text="text.activityHeading">Activity Web</h3>
-            <div class="grid sm:grid-cols-2 gap-4 print:break-inside-avoid">
-              <template x-for="activity in result.activity_web" :key="activity.category">
-                <div class="border-l-4 bg-gradient-to-r from-purple-50 to-white p-4 rounded-r-lg hover:shadow-md transition-all duration-200 print:break-inside-avoid"
-                     :class="{
-                       'border-pink-500': activity.category === 'Art',
-                       'border-blue-500': activity.category === 'NZSL Language',
-                       'border-green-500': activity.category === 'Maths',
-                       'border-purple-500': activity.category === 'Deaf Culture'
-                     }">
-                  <h4 class="font-bold mb-2 flex items-center gap-2 text-base"
-                      :class="{
-                        'text-pink-900': activity.category === 'Art',
-                        'text-blue-900': activity.category === 'NZSL Language',
-                        'text-green-900': activity.category === 'Maths',
-                        'text-purple-900': activity.category === 'Deaf Culture'
-                      }">
-                    <span class="text-xl">
-                      <span x-show="activity.category === 'Art'">🎨</span>
-                      <span x-show="activity.category === 'NZSL Language'">🤟</span>
-                      <span x-show="activity.category === 'Maths'">🔢</span>
-                      <span x-show="activity.category === 'Deaf Culture'">🌏</span>
+            <div
+              x-show="result.language_steps && result.language_steps.length"
+              class="bg-gray-50 border border-gray-200 rounded-xl p-4 print:break-inside-avoid"
+            >
+              <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Teaching flow</p>
+              <div class="grid gap-2 sm:grid-cols-3">
+                <template x-for="(step, idx) in result.language_steps" :key="`${idx}-${step}`">
+                  <div class="border border-gray-300 rounded-lg p-3 bg-white text-sm font-medium text-gray-800 flex items-center justify-center text-center">
+                    <span class="mr-2 inline-flex w-6 h-6 items-center justify-center rounded-full bg-gray-900 text-white text-xs font-bold">
+                      <span x-text="idx + 1"></span>
                     </span>
-                    <span x-text="activity.category"></span>
-                  </h4>
-                  <p class="text-gray-700 text-sm leading-relaxed" x-text="activity.description"></p>
-                </div>
-              </template>
+                    <span x-text="step"></span>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
         </div>

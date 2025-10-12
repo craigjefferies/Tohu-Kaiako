@@ -35,8 +35,23 @@ function app() {
         this.loading = false;
       }
     },
-    async downloadPDF() {
-      window.print();
+    previewPDF() {
+      if (!this.result?.pdf_base64) return;
+      const pdfWindow = window.open("");
+      if (pdfWindow) {
+        pdfWindow.document.write(
+          `<iframe src="data:application/pdf;base64,${this.result.pdf_base64}" ` +
+            'title="Preview" style="border:none;width:100%;height:100%;"></iframe>'
+        );
+      }
+    },
+    downloadPDF() {
+      if (!this.result?.pdf_base64) return;
+      const link = document.createElement("a");
+      const safeTheme = (this.result.theme || "tohu-kaiako").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      link.href = `data:application/pdf;base64,${this.result.pdf_base64}`;
+      link.download = `${safeTheme || "learning-pack"}.pdf`;
+      link.click();
     },
   };
 }

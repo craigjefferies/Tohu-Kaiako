@@ -123,13 +123,10 @@ class SceneImages(BaseModel):
 class GenerateResponse(BaseModel):
     model_config = ConfigDict(extra='ignore')
     
-    image_url: str
-    nzsl_story_prompt: NZSLStoryPrompt
-    activity_web: List[Activity]
-    semantic_components: List[SemanticComponent] = []
-    learning_prompts: List[str] = []  # Simple strings for MVP
+    theme: str
     scene_images: SceneImages
-    story_scaffold: Optional[StoryScaffold] = None
-    # VSD/Symbol features available but optional for MVP
-    vsd_hotspots: List[dict] = []
-    symbol_board: List[dict] = []
+    image_url: str
+    language_steps: List[str] = []  # Ordered Noun → Verb → Location cues
+    sentence_nzsl: str
+    sentence_en: str
+    pdf_base64: str

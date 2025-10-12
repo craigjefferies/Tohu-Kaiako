@@ -1,3 +1,4 @@
+import base64
 import logging
 from pathlib import Path
 from typing import Any, Dict
@@ -9,14 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .llm import generate_pack
-from .schemas import (
-    Activity,
-    GenerateRequest,
-    GenerateResponse,
-    NZSLStoryPrompt,
-    SemanticComponent,
-    StoryScaffold,
-)
+from .pdf_utils import build_single_page_pdf
+from .schemas import GenerateRequest, GenerateResponse
 
 logger = logging.getLogger("tohu-kaiako")
 logging.basicConfig(level=logging.INFO)
@@ -43,29 +38,28 @@ async def index(request: Request) -> HTMLResponse:
 @app.post("/api/generate_pack", response_model=GenerateResponse)
 async def api_generate_pack(req: GenerateRequest) -> GenerateResponse:
     try:
-        text_json, scene_images = await generate_pack(req.theme, req.level, req.keywords or "")
+        text_json, scene_images, sentence_payload = await generate_pack(req.theme, req.level, req.keywords or "")
         
-        # Parse story_scaffold if present
-        story_scaffold = None
-        if "story_scaffold" in text_json:
-            story_scaffold = StoryScaffold(**text_json["story_scaffold"])
+        language_steps = text_json.get("language_steps", [])
+        sentence_en = sentence_payload["sentence_en"]
+        sentence_nzsl = sentence_payload["sentence_nzsl"]
         
-        # Parse vsd_hotspots if present - keep as raw dicts for MVP
-        vsd_hotspots = text_json.get("vsd_hotspots", [])
-        
-        # Parse symbol_board if present - keep as raw dicts for MVP
-        symbol_board = text_json.get("symbol_board", [])
+        pdf_bytes = build_single_page_pdf(
+            theme=req.theme,
+            images=scene_images,
+            sentence_nzsl=sentence_nzsl,
+            sentence_en=sentence_en,
+        )
+        pdf_base64 = base64.b64encode(pdf_bytes).decode("ascii")
         
         response_payload: Dict[str, Any] = {
-            "image_url": scene_images["scene"],
-            "nzsl_story_prompt": NZSLStoryPrompt(**text_json["nzsl_story_prompt"]),
-            "activity_web": [Activity(**activity) for activity in text_json["activity_web"]],
-            "semantic_components": [SemanticComponent(**comp) for comp in text_json.get("semantic_components", [])],
-            "learning_prompts": text_json.get("learning_prompts", []),
+            "theme": req.theme,
+            "language_steps": language_steps,
+            "sentence_en": sentence_en,
+            "sentence_nzsl": sentence_nzsl,
             "scene_images": scene_images,
-            "story_scaffold": story_scaffold,
-            "vsd_hotspots": vsd_hotspots,
-            "symbol_board": symbol_board,
+            "pdf_base64": pdf_base64,
+            "image_url": scene_images["scene"],
         }
         return GenerateResponse(**response_payload)
     except HTTPException:

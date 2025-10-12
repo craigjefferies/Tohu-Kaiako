@@ -145,55 +145,187 @@ def _fallback_component(comp_type: str, theme: str, key_signs: List[str]) -> Dic
     }
 
 
-async def generate_pack(theme: str, level: str, keywords: str) -> Tuple[Dict[str, Any], Dict[str, str]]:
+def _to_third_person(verb: str) -> str:
+    """
+    Convert a simple base verb to third-person singular.
+    This covers regular verbs and a handful of common irregular forms.
+    """
+    word = (verb or "").strip()
+    if not word:
+        return "does"
+    lower = word.lower()
+    irregular = {
+        "be": "is",
+        "have": "has",
+        "do": "does",
+        "go": "goes",
+        "wash": "washes",
+    }
+    if lower in irregular:
+        inflected = irregular[lower]
+    elif lower.endswith("y") and len(lower) > 1 and lower[-2] not in "aeiou":
+        inflected = lower[:-1] + "ies"
+    elif lower.endswith(("s", "x", "z", "ch", "sh", "o")):
+        inflected = lower + "es"
+    else:
+        inflected = lower + "s"
+    return inflected
+
+
+async def generate_pack(theme: str, level: str, keywords: str) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, str]]:
     text_json = await call_text(theme, level, keywords)
     
     # Generate scene seed from theme for visual coherence
     scene_seed = abs(hash(theme)) % 100000
     
-    # Ensure learning prompts cover the desired pedagogy
-    learning_prompts = text_json.setdefault("learning_prompts", [])
-    scaffold_prompts = [
-        "Sequence the isolated images to retell the story.",
-        "Label each isolated image with its NZSL sign.",
-        "Retell or sign the scene using the four images.",
-        "Record or sign back your own version of the scene.",
+    # Ensure learning prompts stay simple and ordered for Noun → Verb → Location
+    default_learning_prompts = [
+        "Name the noun first.",
+        "Add the verb next.",
+        "Finish with where it happens.",
     ]
-    for prompt in scaffold_prompts:
+    incoming_learning = text_json.get("learning_prompts", [])
+    learning_prompts = [
+        prompt.strip()
+        for prompt in incoming_learning
+        if isinstance(prompt, str) and prompt.strip()
+    ][:3]
+    for prompt in default_learning_prompts:
+        if len(learning_prompts) >= 3:
+            break
         if prompt not in learning_prompts:
             learning_prompts.append(prompt)
+    text_json["learning_prompts"] = learning_prompts
     
     components = text_json.get("semantic_components", [])
     indexed_components = _index_components(components)
     
     key_signs = text_json.get("nzsl_story_prompt", {}).get("key_signs", [])
     
-    object_component = indexed_components.get("object") or indexed_components.get("agent") or _fallback_component("object", theme, key_signs)
+    noun_component = (
+        indexed_components.get("agent")
+        or indexed_components.get("object")
+        or _fallback_component("agent", theme, key_signs)
+    )
     action_component = indexed_components.get("action") or _fallback_component("action", theme, key_signs)
-    setting_component = indexed_components.get("setting") or _fallback_component("setting", theme, key_signs)
+    location_component = (
+        indexed_components.get("location")
+        or indexed_components.get("setting")
+        or _fallback_component("setting", theme, key_signs)
+    )
     
-    component_list = [object_component, action_component, setting_component]
+    ordered_components = [noun_component, action_component, location_component]
+    extra_components = [
+        comp
+        for comp in components
+        if isinstance(comp, dict) and comp not in ordered_components
+    ]
+    component_list = ordered_components + extra_components
+    
+    # Build language steps with graceful fallbacks
+    def _label_with_sign(component: Dict[str, Any]) -> Tuple[str, str]:
+        label = str(component.get("label") or theme).strip()
+        nzsl = str(component.get("nzsl_sign") or label.upper()).strip()
+        return label or theme, nzsl or label.upper()
+    
+    noun_label, noun_sign = _label_with_sign(noun_component)
+    verb_label, verb_sign = _label_with_sign(action_component)
+    location_label, location_sign = _label_with_sign(location_component)
+    
+    language_steps = [
+        step.strip()
+        for step in text_json.get("language_steps", [])
+        if isinstance(step, str) and step.strip()
+    ]
+    if len(language_steps) != 3:
+        language_steps = [
+            f"Noun: {noun_label} ({noun_sign})",
+            f"Verb: {verb_label} ({verb_sign})",
+            f"Location: {location_label} ({location_sign})",
+        ]
+    text_json["language_steps"] = language_steps
     
     # Use unified prompts with scene_seed for coherence
-    object_prompt = component_image_prompt(theme, "object", object_component["label"], object_component.get("nzsl_sign", object_component["label"].upper()), scene_seed)
-    action_prompt = component_image_prompt(theme, "action", action_component["label"], action_component.get("nzsl_sign", action_component["label"].upper()), scene_seed)
-    setting_prompt = component_image_prompt(theme, "setting", setting_component["label"], setting_component.get("nzsl_sign", setting_component["label"].upper()), scene_seed)
+    def _normalise_type(component: Dict[str, Any], default: str) -> str:
+        comp_type = str(component.get("type") or "").strip().lower()
+        if not comp_type:
+            return default
+        if default == "setting" and comp_type in {"location", "place"}:
+            return "setting"
+        return comp_type
+    
+    noun_type = _normalise_type(noun_component, "agent")
+    action_type = _normalise_type(action_component, "action")
+    location_type = _normalise_type(location_component, "setting")
+    
+    noun_prompt = component_image_prompt(
+        theme,
+        noun_type,
+        noun_label,
+        noun_sign,
+        scene_seed,
+    )
+    action_prompt = component_image_prompt(
+        theme,
+        action_type,
+        verb_label,
+        verb_sign,
+        scene_seed,
+    )
+    location_prompt = component_image_prompt(
+        theme,
+        location_type,
+        location_label,
+        location_sign,
+        scene_seed,
+    )
     scene_prompt = scene_image_prompt(theme, keywords or "", component_list, scene_seed)
     
-    object_task = asyncio.create_task(_generate_image(object_prompt, f"{theme} object"))
-    action_task = asyncio.create_task(_generate_image(action_prompt, f"{theme} action"))
-    setting_task = asyncio.create_task(_generate_image(setting_prompt, f"{theme} setting"))
+    noun_task = asyncio.create_task(_generate_image(noun_prompt, f"{theme} noun"))
+    action_task = asyncio.create_task(_generate_image(action_prompt, f"{theme} verb"))
+    location_task = asyncio.create_task(_generate_image(location_prompt, f"{theme} location"))
     scene_task = asyncio.create_task(_generate_image(scene_prompt, f"{theme} scene"))
     
-    object_image, action_image, setting_image, scene_image = await asyncio.gather(
-        object_task, action_task, setting_task, scene_task
+    noun_image, action_image, location_image, scene_image = await asyncio.gather(
+        noun_task, action_task, location_task, scene_task
     )
     
     scene_images = {
-        "object": object_image,
+        "object": noun_image,
         "action": action_image,
-        "setting": setting_image,
+        "setting": location_image,
         "scene": scene_image,
     }
     
-    return text_json, scene_images
+    # Assemble simple bilingual sentence data
+    def _sentence_case(text: str) -> str:
+        stripped = text.strip()
+        if not stripped:
+            return ""
+        return stripped[0].upper() + stripped[1:]
+    
+    noun_phrase_raw = noun_label.strip() or theme
+    noun_phrase = noun_phrase_raw.title() if noun_phrase_raw.isupper() else _sentence_case(noun_phrase_raw)
+    verb_phrase = _to_third_person(verb_label)
+    location_raw = location_label.strip() or f"{theme} place"
+    location_core = location_raw.title() if location_raw.isupper() else location_raw
+    location_phrase = location_core
+    if not location_phrase.lower().startswith("the "):
+        location_phrase = f"the {location_phrase}"
+    location_phrase = location_phrase.strip()
+    
+    sentence_en = f"The {noun_phrase} {verb_phrase} in {location_phrase}."
+    sentence_nzsl = f"{noun_sign} {verb_sign} {location_sign}"
+    
+    sentence_payload = {
+        "sentence_en": sentence_en,
+        "sentence_nzsl": sentence_nzsl,
+        "noun_label": noun_label,
+        "verb_label": verb_label,
+        "location_label": location_label,
+        "noun_sign": noun_sign,
+        "verb_sign": verb_sign,
+        "location_sign": location_sign,
+    }
+    
+    return text_json, scene_images, sentence_payload

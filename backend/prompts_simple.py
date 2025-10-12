@@ -1,51 +1,71 @@
 from typing import Dict, List, Optional
 
 
-def unified_image_prompt(
-    theme: str,
-    asset_type: str,
-    asset_spec: str,
-    scene_seed: int,
-) -> str:
-    """Simple unified image prompt for all asset types."""
-    background = "clean neutral background" if asset_type != "SCENE" else "soft warm background"
+def unified_image_prompt(theme: str, role: str, detail: str, seed: int) -> str:
+    """
+    Unified prompt prioritising semantic clarity for NZSL learning assets.
+    """
+    role_upper = role.upper()
     
-    return f"""Create a child-safe illustration for ages 3-5.
-
-Theme: {theme}
-Type: {asset_type}
-Details: {asset_spec}
-
-Style: Flat, friendly, storybook quality (Eric Carle inspired)
-Colors: Soft, warm, welcoming
-Composition: {background}
-Seed: {scene_seed} (for style consistency)
-
-Requirements:
-- NO text or labels in image
-- Child-safe, joyful, inclusive
-- Clear shapes, high contrast
-- 1024x1024 PNG"""
+    base = (
+        "Make the meaning obvious for tamariki aged 3–5. "
+        "Keep the style calm, inclusive, and storybook simple. No text. "
+        "Ground everything in everyday Aotearoa New Zealand experiences (local flora/fauna, classrooms, whānau life) so it feels familiar."
+    )
+    
+    semantic_guidance = {
+        "OBJECT": "Show the main thing we are naming by itself so learners can clearly see what it is.",
+        "AGENT": "Show the main person/character by themselves so learners can clearly see who it is.",
+        "ACTION": "Show the same subject performing the action so learners understand what it does.",
+        "SETTING": "Show where it happens without changing who the character is.",
+        "LOCATION": "Show where it happens without changing who the character is.",
+        "SCENE": "Bring the subject, action, and place together in one picture that tells a short story.",
+    }
+    
+    granular_control = {
+        "OBJECT": "Single isolated subject, neutral background, clear shapes. Keep proportions child-friendly and recognisable.",
+        "AGENT": "Single isolated subject, neutral background, clear shapes. Keep proportions child-friendly and recognisable.",
+        "ACTION": "Same subject in motion, clean neutral background. Freeze a mid-action pose that reads instantly.",
+        "SETTING": "Environment cues, soft warm background with depth. Use real Aotearoa details (e.g., pōhutukawa, kiwiana).",
+        "LOCATION": "Environment cues, soft warm background with depth. Use real Aotearoa details (e.g., pōhutukawa, kiwiana).",
+        "SCENE": "Combine subject, action, and place. Keep characters consistent and interactions clear.",
+    }
+    
+    semantic_text = semantic_guidance.get(role_upper, semantic_guidance["OBJECT"])
+    control_text = granular_control.get(role_upper, granular_control["OBJECT"])
+    
+    return (
+        f"{base}\n"
+        f"Theme: {theme}\n"
+        f"Role: {role_upper}\n"
+        f"Semantic clarity: {semantic_text}\n"
+        f"Instructions: {control_text} {detail}\n"
+        f"Image format: 1024x1024 PNG\n"
+        f"Seed: {seed}"
+    )
 
 
 def component_image_prompt(theme: str, component_type: str, label: str, nzsl_sign: str, scene_seed: int = 0) -> str:
     """Generate prompt for isolated component."""
     specs = {
-        "OBJECT": f"Single {label}, clear view",
-        "ACTION": f"{label} in motion",
-        "SETTING": f"{label} environment, simple",
-        "AGENT": f"Single {label} character, friendly",
-        "ATTRIBUTE": f"{label} feeling/quality visual",
+        "OBJECT": f"{label} (NZSL: {nzsl_sign}) clearly visible",
+        "ACTION": f"{label} action showing motion (NZSL: {nzsl_sign})",
+        "SETTING": f"{label} location cues (NZSL: {nzsl_sign})",
+        "AGENT": f"{label} character, warm expression (NZSL: {nzsl_sign})",
+        "ATTRIBUTE": f"{label} feeling or quality (NZSL: {nzsl_sign})",
     }
-    asset_spec = specs.get(component_type.upper(), f"{label}")
-    return unified_image_prompt(theme, component_type.upper(), asset_spec, scene_seed)
+    role = component_type.upper()
+    detail = specs.get(role, f"{label} (NZSL: {nzsl_sign})")
+    return unified_image_prompt(theme, role, detail, scene_seed)
 
 
 def scene_image_prompt(theme: str, keywords: str, components: List[Dict[str, str]], scene_seed: int) -> str:
     """Generate prompt for full scene."""
     component_list = ", ".join([c['label'] for c in components])
-    asset_spec = f"Scene with: {component_list}. Clear WHO/WHAT/WHERE. Warm, inviting."
-    return unified_image_prompt(theme, "SCENE", asset_spec, scene_seed)
+    detail = f"Include: {component_list}. Keep WHO/WHAT/WHERE clear and welcoming."
+    if keywords:
+        detail += f" Context keywords: {keywords}."
+    return unified_image_prompt(theme, "SCENE", detail, scene_seed)
 
 
 def text_system_prompt(theme: str, level: str, keywords: str) -> str:
@@ -98,16 +118,22 @@ Return ONLY valid JSON (no markdown, no explanations):
     {{"type": "action", "label": "Action", "nzsl_sign": "SIGN", "semantic_role": "What"}},
     {{"type": "setting", "label": "Place", "nzsl_sign": "SIGN", "semantic_role": "Where"}}
   ],
+  "language_steps": [
+    "Noun: NAME the key person or object (use AGENT/OBJECT)",
+    "Verb: TELL the action that happens (use ACTION)",
+    "Location: SHOW where it happens (use LOCATION/SETTING)"
+  ],
   "learning_prompts": [
-    {{"type": "wh_question", "nzsl": "WHO?", "en": "Who do you see?"}},
-    {{"type": "wh_question", "nzsl": "WHAT DO?", "en": "What are they doing?"}},
-    {{"type": "wh_question", "nzsl": "WHERE?", "en": "Where is this?"}}
+    "Name the noun first.",
+    "Add the verb next.",
+    "Finish with where it happens."
   ]
 }}
 
 RULES:
 - Use authentic NZSL glosses (ALL CAPS)
 - 3-5 semantic roles (AGENT, ACTION, LOCATION, PATIENT, STATE)
+- language_steps must be exactly 3 strings ordered: Noun, Verb, Location (each include theme-specific words)
 - Bbox coordinates 0-1 normalized, estimate positions
 - Colour coding: orange=agent, yellow=action, green=object, blue=setting, purple=state
 - Te reo labels optional (leave "" if unsure)
