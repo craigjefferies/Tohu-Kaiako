@@ -1,157 +1,185 @@
 <!doctype html>
-<html lang="en" x-data="app()" class="h-full">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title x-text="text.title">Tohu Kaiako — "Teacher's Sign"</title>
-    <link rel="stylesheet" href="/static/styles.css?v=2" />
-    <script defer src="/static/i18n.js"></script>
-    <script defer src="/static/app.js"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <title>Tohu Kaiako | NZSL Resource Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/styles.css?v=3" />
   </head>
-  <body x-cloak class="min-h-full bg-gray-50 text-gray-900">ml>
-<html lang="en" x-data="app()" class="h-full">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title x-text="text.title">Tohu Kaiako — “Teacher’s Sign”</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-    <script defer src="/static/i18n.js"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="/static/app.js"></script>
-  </head>
-  <body class="min-h-full bg-gray-50 text-gray-900">
-    <main class="max-w-3xl mx-auto p-6">
-      <h1 class="text-2xl font-semibold mb-4" x-text="text.heading">Tohu Kaiako — “Teacher’s Sign”</h1>
-      <form
-        @submit.prevent="generate"
-        class="grid gap-4 bg-white p-4 rounded-xl shadow"
-        :aria-busy="loading"
-      >
-        <label class="grid gap-1">
-          <span class="text-sm font-medium" x-text="text.themeLabel">Theme / Kaupapa</span>
-          <input
-            x-model="form.theme"
-            required
-            class="border rounded p-2"
-            :placeholder="text.themePlaceholder"
-            name="theme"
-            type="text"
-          />
-        </label>
-        <label class="grid gap-1">
-          <span class="text-sm font-medium" x-text="text.levelLabel">Learning Level</span>
-          <select x-model="form.level" class="border rounded p-2" name="level">
-            <option value="ECE">ECE</option>
-            <option value="Junior Primary">Junior Primary</option>
-          </select>
-        </label>
-        <label class="grid gap-1">
-          <span class="text-sm font-medium" x-text="text.keywordsLabel">Keywords / Kupu matua (optional)</span>
-          <input
-            x-model="form.keywords"
-            class="border rounded p-2"
-            :placeholder="text.keywordsPlaceholder"
-            name="keywords"
-            type="text"
-          />
-        </label>
-        <button
-          type="submit"
-          class="bg-black text-white px-4 py-2 rounded hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-60"
-          :disabled="loading"
-        >
-          <span x-text="text.submitLabel">Hangaia te Kete / Generate Pack</span>
-        </button>
-      </form>
+  <body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-md p-4 sticky top-0 z-10 no-print">
+      <div class="max-w-6xl mx-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold text-sky-700 flex items-center gap-2">
+            <span aria-hidden="true">🌿</span>
+            <span>Tohu Kaiako</span>
+          </h1>
+          <p class="text-sm text-gray-500">NZSL–English Whole–Part–Whole resource generator</p>
+        </div>
+        <nav class="flex gap-3">
+          <button data-view="generator" class="tk-nav-button bg-sky-700 text-white px-4 py-2 rounded-lg shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-700 focus-visible:ring-offset-2">
+            Daily Generator
+          </button>
+          <button data-view="revisit" class="tk-nav-button bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2">
+            Revisit Packs
+          </button>
+        </nav>
+      </div>
+      <div id="error-message" class="hidden text-red-600 text-sm text-center mt-2"></div>
+      <div id="user-id-display" class="text-xs text-center text-gray-500 mt-1">User ID: Loading…</div>
+    </header>
 
-      <p
-        x-show="loading"
-        class="mt-6 text-sm text-gray-600"
-        x-text="text.generating"
-        x-cloak
-        role="status"
-        aria-live="polite"
-      >
-        Generating…
-      </p>
+    <main class="flex-grow max-w-6xl mx-auto w-full p-4 lg:p-8 space-y-8">
+      <section id="generator-view" class="space-y-6">
+        <div class="bg-white p-6 rounded-xl shadow-xl space-y-4">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">1. Generate a new Whole–Part–Whole pack</h2>
+            <p class="text-sm text-gray-500">Enter a theme or moment to create NZSL-rich learning prompts grounded in Te Whāriki.</p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <input
+              id="theme-input"
+              type="text"
+              name="theme"
+              value=""
+              placeholder="e.g., Feeding the ducks at the pond"
+              class="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-600 focus:border-sky-600 transition"
+              required
+            />
+            <button
+              id="generate-button"
+              class="bg-emerald-600 text-white px-4 py-3 rounded-lg font-semibold shadow-md hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-60"
+              type="button"
+            >
+              <svg id="loading-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="generate-button-label">Generate Pack</span>
+            </button>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <label class="flex flex-col gap-1 text-sm">
+              <span class="font-medium text-gray-700">Learning level</span>
+              <select id="level-select" class="border-2 border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-600 focus:border-sky-600">
+                <option value="ECE">ECE</option>
+                <option value="Junior Primary">Junior Primary</option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-1 text-sm">
+              <span class="font-medium text-gray-700">Keywords (optional)</span>
+              <input id="keywords-input" type="text" class="border-2 border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-600 focus:border-sky-600" placeholder="friendly, calm illustration" />
+            </label>
+            <label class="flex flex-col gap-1 text-sm">
+              <span class="font-medium text-gray-700">Subject focus</span>
+              <select id="subject-select" class="border-2 border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-sky-600 focus:border-sky-600">
+                <option value="language">Language</option>
+                <option value="math">Mathematics</option>
+              </select>
+            </label>
+          </div>
+          <p class="text-xs text-gray-500">We currently support Whole–Part–Whole packs for Language and a pilot “Name the number” flow for Mathematics.</p>
+        </div>
 
-      <p
-        x-show="error"
-        class="mt-4 text-sm text-red-600"
-        x-text="error"
-        role="alert"
-        aria-live="assertive"
-        x-cloak
-      ></p>
+        <div id="placeholder-message" class="bg-white p-12 rounded-xl shadow-xl text-center text-gray-600 space-y-3">
+          <div class="text-6xl" aria-hidden="true">🖐️</div>
+          <p class="text-xl font-semibold text-gray-800">Ready to create your first pack</p>
+          <p>Enter a theme above to generate a Whole–Part–Whole NZSL resource grounded in Deaf pedagogy.</p>
+        </div>
 
-      <section x-show="result" class="mt-6 bg-white p-6 rounded-xl shadow print:p-0" x-cloak>
-        <div class="flex flex-col gap-4">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p class="text-xs uppercase tracking-wide text-gray-500">Theme</p>
-              <h2 class="text-2xl font-semibold text-gray-900" x-text="result.theme"></h2>
+        <div id="pack-display" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-xl shadow-xl space-y-6">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b pb-4">
+              <div>
+                <p class="text-xs uppercase tracking-wide text-gray-500">Theme</p>
+                <h3 id="pack-title" class="text-3xl font-extrabold text-sky-700"></h3>
+                <p id="pack-date" class="text-sm text-gray-500"></p>
+              </div>
+              <div class="flex gap-2 no-print">
+                <button id="open-print-view" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-200 transition">
+                  Print / Project View
+                </button>
+                <button id="download-pdf" class="px-4 py-2 bg-sky-700 text-white rounded-lg shadow hover:bg-sky-800 transition">
+                  Download PDF
+                </button>
+              </div>
             </div>
-            <div class="flex gap-2 print:hidden">
-              <button @click="previewPDF()" class="border px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" type="button">
-                Preview PDF
-              </button>
-              <button @click="downloadPDF()" class="bg-black text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity" type="button">
-                Download PDF
-              </button>
+
+            <div class="bg-sky-700 text-white rounded-lg p-5 space-y-2">
+              <div>
+                <p class="text-xs uppercase tracking-wide opacity-80">NZSL gloss</p>
+                <p id="nzsl-gloss" class="text-xl font-mono tracking-widest uppercase"></p>
+              </div>
+              <div class="pt-2 border-t border-white border-opacity-20">
+                <p class="text-xs uppercase tracking-wide opacity-80">English sentence</p>
+                <p id="english-sentence" class="text-lg font-semibold"></p>
+              </div>
             </div>
+
+            <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3" id="pack-cards"></div>
           </div>
 
-          <div class="grid gap-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <template x-for="card in [
-                { key: 'object', label: 'Noun', tip: 'Show the main thing we are naming.' },
-                { key: 'action', label: 'Verb', tip: 'Show the same subject doing the action.' },
-                { key: 'setting', label: 'Where', tip: 'Show where it happens without changing who.' },
-                { key: 'scene', label: 'Scene', tip: 'Combine the subject, action, and place together.' },
-              ]" :key="card.key">
-                <figure class="flex flex-col gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
-                  <div class="text-xs font-semibold uppercase tracking-wide text-gray-500" x-text="card.label"></div>
-                  <img
-                    class="w-full aspect-square object-cover rounded-lg bg-white"
-                    :src="result.scene_images[card.key]"
-                    :alt="`${card.label} illustration`"
-                  />
-                  <figcaption class="text-xs text-gray-600 leading-snug" x-text="card.tip"></figcaption>
-                </figure>
-              </template>
-            </div>
+          <div id="teacher-tip" class="bg-amber-100 border-l-4 border-amber-500 p-4 rounded-lg text-amber-900">
+            <p class="font-semibold text-sm uppercase tracking-wide">Teacher tip</p>
+            <p id="teacher-tip-text" class="text-sm"></p>
+          </div>
+        </div>
+      </section>
 
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center space-y-4 print:break-inside-avoid">
+      <section id="revisit-view" class="hidden space-y-6">
+        <header>
+          <h2 class="text-3xl font-bold text-sky-700">2. Revisit &amp; Review</h2>
+          <p class="text-sm text-gray-500">Your recent packs are saved here when Firebase is configured. Without Firebase we keep the latest pack locally.</p>
+        </header>
+        <div id="revisit-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-6 bg-white rounded-xl shadow-md text-gray-400">Loading previous packs…</div>
+        </div>
+      </section>
+
+      <section id="print-view" class="hidden">
+        <div class="fixed top-0 left-0 right-0 z-20 p-4 bg-white shadow-lg flex justify-between items-center no-print">
+          <button id="close-print-view" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-gray-700 font-medium">
+            &larr; Back to Generator
+          </button>
+          <button id="print-button" class="px-4 py-2 bg-pink-600 text-white rounded-lg shadow-md hover:bg-pink-700 font-semibold">
+            🖨️ Print whānau share pack
+          </button>
+        </div>
+        <div id="print-container" class="print-container hidden mt-20 p-4 print-area">
+          <div class="bg-white p-8 rounded-xl shadow-2xl border-4 border-sky-700 max-w-4xl mx-auto space-y-6">
+            <div class="text-center space-y-2 border-b border-gray-200 pb-4">
+              <h1 id="print-title" class="text-4xl font-extrabold text-sky-700"></h1>
+              <p id="print-subtitle" class="text-gray-500 text-sm"></p>
+            </div>
+            <div class="bg-gray-50 p-6 rounded-lg space-y-3">
               <div>
-                <p class="text-xs uppercase tracking-wide text-amber-700">NZSL sentence</p>
-                <p class="text-3xl font-bold text-amber-900 font-mono" x-text="result.sentence_nzsl"></p>
+                <p class="text-xs uppercase tracking-wide text-gray-500">NZSL gloss</p>
+                <p id="print-nzsl" class="text-2xl font-mono tracking-widest text-sky-700"></p>
               </div>
               <div>
                 <p class="text-xs uppercase tracking-wide text-gray-500">English sentence</p>
-                <p class="text-xl text-gray-900 font-semibold" x-text="result.sentence_en"></p>
+                <p id="print-english" class="text-xl font-semibold text-gray-900"></p>
               </div>
             </div>
-
-            <div
-              x-show="result.language_steps && result.language_steps.length"
-              class="bg-gray-50 border border-gray-200 rounded-xl p-4 print:break-inside-avoid"
-            >
-              <p class="text-xs uppercase tracking-wide text-gray-500 mb-2">Teaching flow</p>
-              <div class="grid gap-2 sm:grid-cols-3">
-                <template x-for="(step, idx) in result.language_steps" :key="`${idx}-${step}`">
-                  <div class="border border-gray-300 rounded-lg p-3 bg-white text-sm font-medium text-gray-800 flex items-center justify-center text-center">
-                    <span class="mr-2 inline-flex w-6 h-6 items-center justify-center rounded-full bg-gray-900 text-white text-xs font-bold">
-                      <span x-text="idx + 1"></span>
-                    </span>
-                    <span x-text="step"></span>
-                  </div>
-                </template>
-              </div>
-            </div>
+            <div class="space-y-4" id="print-pack-cards"></div>
+            <footer class="pt-4 text-center text-xs text-gray-400 border-t border-gray-100">
+              Tohu Kaiako — supporting Deaf and hearing kaiako with Whole–Part–Whole NZSL learning.
+            </footer>
           </div>
         </div>
       </section>
     </main>
+
+    <script>
+      window.__APP_CONFIG__ = {
+        firebaseConfig: {{ firebase_config|tojson }},
+        firebaseAppId: {{ firebase_app_id|tojson }},
+        firebaseInitialToken: {{ firebase_initial_token|tojson }},
+      };
+    </script>
+    <script type="module" src="/static/app.js"></script>
   </body>
 </html>

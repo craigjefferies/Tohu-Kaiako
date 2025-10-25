@@ -9,6 +9,21 @@ class GenerateRequest(BaseModel):
     theme: str = Field(..., min_length=2)
     level: str = "ECE"
     keywords: Optional[str] = ""
+    subject: str = "language"
+    activity: Optional[str] = None
+
+
+class PackContentItem(BaseModel):
+    """Single phase in the Whole–Part–Whole sequence."""
+    model_config = ConfigDict(extra='ignore')
+    
+    phase: str
+    image_role: str
+    pedagogical_purpose: str
+    language_focus: str
+    image_description: str
+    image_data_url: Optional[str] = None
+    order: int = 0
 
 
 class SemanticComponent(BaseModel):
@@ -123,10 +138,13 @@ class SceneImages(BaseModel):
 class GenerateResponse(BaseModel):
     model_config = ConfigDict(extra='ignore')
     
+    pack_id: str
+    generated_at: str
     theme: str
-    scene_images: SceneImages
-    image_url: str
-    language_steps: List[str] = []  # Ordered Noun → Verb → Location cues
+    language_steps: List[str] = []
     sentence_nzsl: str
     sentence_en: str
-    pdf_base64: str
+    teacher_tip: str
+    pack_content: List[PackContentItem]
+    scene_images: Optional[SceneImages] = None
+    pdf_base64: Optional[str] = None

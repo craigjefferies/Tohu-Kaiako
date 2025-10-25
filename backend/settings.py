@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     text_model: str = "gemini-2.0-flash-exp"
     image_model: str = "gemini-2.5-flash-image"
     timeout_secs: int = 60
+    firebase_config_json: str = ""
+    firebase_app_id: str = ""
+    firebase_initial_token: str = ""
     
     model_config = SettingsConfigDict(
         env_file=".env",
