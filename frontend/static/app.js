@@ -9,6 +9,120 @@ const state = {
   config: window.__APP_CONFIG__ || {},
 };
 
+const sparkLibrary = [
+  {
+    category: "Daily Life",
+    icon: "🌞",
+    theme: "Tidying the sandpit together",
+    focus: "collaborative verbs, sequencing, hygiene, routines",
+  },
+  {
+    category: "Daily Life",
+    icon: "🌞",
+    theme: "Washing hands before kai time",
+    focus: "collaborative verbs, sequencing, hygiene, routines",
+  },
+  {
+    category: "Daily Life",
+    icon: "🌞",
+    theme: "Packing toys away after play",
+    focus: "collaborative verbs, sequencing, hygiene, routines",
+  },
+  {
+    category: "Outdoors & Nature",
+    icon: "🐚",
+    theme: "Feeding ducks at the school pond",
+    focus: "environment, movement verbs, nature vocabulary",
+  },
+  {
+    category: "Outdoors & Nature",
+    icon: "🐚",
+    theme: "Planting seeds in the garden bed",
+    focus: "environment, movement verbs, nature vocabulary",
+  },
+  {
+    category: "Outdoors & Nature",
+    icon: "🐚",
+    theme: "Jumping in puddles after the rain",
+    focus: "environment, movement verbs, nature vocabulary",
+  },
+  {
+    category: "Community & Movement",
+    icon: "🚲",
+    theme: "Walking to the library together",
+    focus: "community places, collective action, sustainability",
+  },
+  {
+    category: "Community & Movement",
+    icon: "🚲",
+    theme: "Visiting the marae for kapa haka",
+    focus: "community places, collective action, sustainability",
+  },
+  {
+    category: "Community & Movement",
+    icon: "🚲",
+    theme: "Taking the recycling to the bins",
+    focus: "community places, collective action, sustainability",
+  },
+  {
+    category: "Kai and Whānau",
+    icon: "🍎",
+    theme: "Sharing fruit at morning tea time",
+    focus: "gratitude, turn-taking, family and food routines",
+  },
+  {
+    category: "Kai and Whānau",
+    icon: "🍎",
+    theme: "Baking muffins with mum or dad",
+    focus: "gratitude, turn-taking, family and food routines",
+  },
+  {
+    category: "Kai and Whānau",
+    icon: "🍎",
+    theme: "Saying thank you after kai time",
+    focus: "gratitude, turn-taking, family and food routines",
+  },
+  {
+    category: "Feelings & Relationships",
+    icon: "🧤",
+    theme: "Comforting a friend who is sad",
+    focus: "emotions, empathy, social connection",
+  },
+  {
+    category: "Feelings & Relationships",
+    icon: "🧤",
+    theme: "Saying sorry after bumping someone",
+    focus: "emotions, empathy, social connection",
+  },
+  {
+    category: "Feelings & Relationships",
+    icon: "🧤",
+    theme: "Waving goodbye to whānau in morning",
+    focus: "emotions, empathy, social connection",
+  },
+  {
+    category: "Seasons & Aotearoa Life",
+    icon: "🐑",
+    theme: "Making Matariki stars with our whānau",
+    focus: "seasonal traditions, Te Ao Māori, whānau connection",
+  },
+  {
+    category: "Seasons & Aotearoa Life",
+    icon: "🐑",
+    theme: "Wearing gumboots on a frosty morning",
+    focus: "seasonal traditions, Te Ao Māori, whānau connection",
+  },
+  {
+    category: "Seasons & Aotearoa Life",
+    icon: "🐑",
+    theme: "Collecting leaves in the autumn wind",
+    focus: "seasonal traditions, Te Ao Māori, whānau connection",
+  },
+];
+
+let lastSparkIndex = -1;
+let sparkTimerId = null;
+
 const elements = {
   navButtons: Array.from(document.querySelectorAll(".tk-nav-button")),
   errorMessage: document.getElementById("error-message"),
@@ -42,6 +156,54 @@ const elements = {
   printNzsl: document.getElementById("print-nzsl"),
   printEnglish: document.getElementById("print-english"),
   printPackCards: document.getElementById("print-pack-cards"),
+  sparkChip: document.getElementById("spark-chip"),
+  sparkFocus: document.getElementById("spark-focus"),
+  surpriseMe: document.getElementById("surprise-me"),
+};
+
+const chooseSparkSuggestion = (excludeCurrent = false) => {
+  if (!sparkLibrary.length) return null;
+  let index = Math.floor(Math.random() * sparkLibrary.length);
+  if (excludeCurrent && sparkLibrary.length > 1) {
+    let attempts = 0;
+    while (index === lastSparkIndex && attempts < 6) {
+      index = Math.floor(Math.random() * sparkLibrary.length);
+      attempts += 1;
+    }
+  }
+  lastSparkIndex = index;
+  return sparkLibrary[index];
+};
+
+const applySparkSuggestion = (spark, { updatePlaceholder = true } = {}) => {
+  if (!spark || !elements.sparkChip) return;
+  const labelParts = [spark.icon, spark.category].filter(Boolean).join(" ");
+  elements.sparkChip.textContent = `${labelParts || spark.category} — ${spark.theme}`;
+  elements.sparkChip.dataset.category = spark.category;
+  elements.sparkChip.dataset.theme = spark.theme;
+  elements.sparkChip.dataset.icon = spark.icon || "";
+  elements.sparkChip.dataset.focus = spark.focus || "";
+  if (elements.sparkFocus) {
+    elements.sparkFocus.textContent = spark.focus ? `(Focus: ${spark.focus})` : "";
+  }
+  if (updatePlaceholder && elements.themeInput && !elements.themeInput.value) {
+    elements.themeInput.placeholder = spark.theme;
+  }
+};
+
+const rotateSparkPrompt = (forceChange = false) => {
+  const spark = chooseSparkSuggestion(forceChange);
+  applySparkSuggestion(spark);
+};
+
+const handleSurpriseMe = () => {
+  const spark = chooseSparkSuggestion(true);
+  applySparkSuggestion(spark, { updatePlaceholder: true });
+  if (spark && elements.themeInput) {
+    elements.themeInput.value = spark.theme;
+    elements.themeInput.focus({ preventScroll: true });
+  }
+  setError("");
 };
 
 const formatDateTime = (iso) => {
@@ -353,6 +515,9 @@ const initListeners = () => {
   });
   elements.closePrintView.addEventListener("click", () => setView("generator"));
   elements.printButton.addEventListener("click", () => window.print());
+  elements.themeInput.addEventListener("focus", () => rotateSparkPrompt(true));
+  elements.themeInput.addEventListener("blur", () => rotateSparkPrompt(false));
+  elements.surpriseMe.addEventListener("click", handleSurpriseMe);
 };
 
 const initFirebase = async () => {
@@ -400,6 +565,11 @@ const init = async () => {
   renderRevisitList();
   restoreLatestPack();
   initFirebase();
+  rotateSparkPrompt(true);
+  if (sparkTimerId) {
+    clearInterval(sparkTimerId);
+  }
+  sparkTimerId = setInterval(() => rotateSparkPrompt(true), 20000);
 };
 
 init();
